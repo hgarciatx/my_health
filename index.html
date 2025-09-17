@@ -1,0 +1,2956 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>V0.1 Health Tracker – Single-File PWA</title>
+    <meta name="theme-color" content="#0b0f16" />
+    <style>
+        :root {
+            --bg: #0b0f16;
+            --panel: #121826;
+            --ink: #e8edf7;
+            --muted: #97a3b6;
+            --accent: #4aa8ff;
+            --accent-2: #2bd980;
+            --danger: #ff6b6b;
+            --warn: #f7b500;
+            --ok: #39d353;
+            --card: #0f1420;
+            --border: #243047;
+            --focus: #7bc2ff;
+            --pill: #1b2334
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            margin: 0;
+            font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+            color: var(--ink);
+            background: linear-gradient(180deg, #0b0f16 0%, #0c1220 100%)
+        }
+
+        .wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px
+        }
+
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px
+        }
+
+        .title {
+            font-weight: 800;
+            font-size: 24px;
+            letter-spacing: .2px
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .tab-btn {
+            appearance: none;
+            border: 1px solid var(--border);
+            background: var(--pill);
+            color: var(--ink);
+            padding: 10px 14px;
+            border-radius: 999px;
+            cursor: pointer
+        }
+
+        .tab-btn[aria-selected="true"] {
+            background: var(--accent);
+            border-color: transparent;
+            color: #001428;
+            font-weight: 700
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .25)
+        }
+
+        .grid {
+            display: grid;
+            gap: 16px
+        }
+
+        @media(min-width:900px) {
+            .grid-2 {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .grid-3 {
+                grid-template-columns: 1fr 1fr 1fr
+            }
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px
+        }
+
+        .card h3 {
+            margin: .2rem 0 .6rem
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+            margin: 8px 0 4px
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: #0c1320;
+            color: var(--ink);
+            outline: none;
+            transition: border-color .15s, box-shadow .15s
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--focus);
+            box-shadow: 0 0 0 3px rgba(123, 194, 255, .15)
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .row>* {
+            flex: 1 1 140px
+        }
+
+        .btn {
+            appearance: none;
+            border: 1px solid var(--border);
+            background: var(--pill);
+            color: var(--ink);
+            padding: 10px 12px;
+            border-radius: 10px;
+            cursor: pointer
+        }
+
+        .btn.primary {
+            background: var(--accent);
+            color: #001428;
+            border-color: transparent;
+            font-weight: 700
+        }
+
+        .btn.good {
+            background: var(--accent-2);
+            color: #002a14;
+            border-color: transparent;
+            font-weight: 700
+        }
+
+        .btn.warn {
+            background: var(--warn);
+            color: #331f00;
+            border-color: transparent;
+            font-weight: 700
+        }
+
+        .btn.danger {
+            background: #ff6b6b;
+            color: #330000;
+            border-color: transparent;
+            font-weight: 700
+        }
+
+        .btn:disabled {
+            opacity: .6;
+            cursor: not-allowed
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid var(--border);
+            padding: 10px 8px;
+            text-align: left;
+            vertical-align: top
+        }
+
+        th {
+            color: var(--muted);
+            font-weight: 600
+        }
+
+        tr:hover td {
+            background: #0d1525
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: var(--pill);
+            border: 1px solid var(--border);
+            font-size: 12px
+        }
+
+        .kbd {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 12px;
+            background: #0c1320;
+            border: 1px solid var(--border);
+            padding: 2px 6px;
+            border-radius: 6px
+        }
+
+        .footer {
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: 12px
+        }
+
+        .notice {
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--pill);
+            font-size: 11px
+        }
+
+        .due {
+            background: rgba(247, 181, 0, .15);
+            border-color: #f7b500
+        }
+
+        .ok {
+            background: rgba(43, 217, 128, .15);
+            border-color: #2bd980
+        }
+
+        .overdue {
+            background: rgba(255, 107, 107, .18);
+            border-color: #ff6b6b
+        }
+
+        .wide-multi {
+            min-width: 240px;
+            max-width: 100%
+        }
+
+        .toast {
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            background: #101829;
+            border: 1px solid var(--border);
+            color: var(--ink);
+            padding: 10px 12px;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+            opacity: .98;
+            z-index: 9999
+        }
+
+        .toast.ok {
+            border-color: var(--ok)
+        }
+
+        .toast.warn {
+            border-color: var(--warn)
+        }
+
+        .toast.err {
+            border-color: var(--danger)
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .5);
+            display: none;
+            place-items: center;
+            z-index: 10000
+        }
+
+        .modal {
+            background: #101829;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            width: min(520px, 92vw);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, .45)
+        }
+
+        .modal h4 {
+            margin: 0 0 8px
+        }
+
+        .modal p {
+            margin: 0 0 14px;
+            color: var(--muted)
+        }
+
+        .modal .actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end
+        }
+
+        /* tiny chart wrapper */
+        .chart-wrap {
+            background: #0c1320;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px
+        }
+
+        canvas {
+            max-width: 100%;
+            height: 240px
+        }
+
+        /* tiny chart tooltip */
+        .chart-tip {
+            position: fixed;
+            pointer-events: none;
+            background: #0f1420;
+            border: 1px solid var(--border);
+            padding: 6px 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--ink);
+            z-index: 10001;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+            white-space: nowrap;
+        }
+
+        #fasting-table input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: #0c1320;
+            color: var(--ink);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <div>
+                <div class="title">Health Tracker</div>
+                <div class="subtitle">Offline • Local only • Import/Export • Installable PWA</div>
+            </div>
+            <nav class="tabs" role="tablist" aria-label="Sections">
+                <button class="tab-btn" role="tab" aria-selected="true" data-tab="entries">Entries</button>
+                <button class="tab-btn" role="tab" aria-selected="false" data-tab="meds">Medications</button>
+                <button class="tab-btn" role="tab" aria-selected="false" data-tab="schedule">Scheduler</button>
+                <button class="tab-btn" role="tab" aria-selected="false" data-tab="charts">Charts</button>
+                <button class="tab-btn" role="tab" aria-selected="false" data-tab="fasting">Fasting</button>
+                <button class="tab-btn" role="tab" aria-selected="false" data-tab="data">Data</button>
+                <button class="tab-btn" role="tab" aria-selected="false" data-tab="settings">Settings & Help</button>
+            </nav>
+        </header>
+
+        <!-- ENTRIES -->
+        <section class="panel" data-panel="entries" role="tabpanel" aria-labelledby="Entries">
+            <div class="grid grid-2">
+                <form id="form-entry" class="card" autocomplete="off">
+                    <h3>Add Weight / Blood Pressure</h3>
+                    <div class="row">
+                        <div>
+                            <label for="entry-dt">Date & Time</label>
+                            <input type="datetime-local" id="entry-dt" required />
+                        </div>
+                        <div>
+                            <label for="entry-notes">Notes (optional)</label>
+                            <input type="text" id="entry-notes" placeholder="Fasting, after walk, etc." />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div>
+                            <label for="weight">Weight</label>
+                            <input type="number" inputmode="decimal" id="weight" min="0" step="0.1"
+                                placeholder="e.g., 162.5" />
+                        </div>
+                        <div>
+                            <label for="weight-unit">Unit</label>
+                            <select id="weight-unit">
+                                <option value="lb">lb</option>
+                                <option value="kg">kg</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div>
+                            <label for="sys">Systolic (mmHg)</label>
+                            <input type="number" inputmode="numeric" id="sys" min="40" max="260" step="1"
+                                placeholder="e.g., 120" />
+                        </div>
+                        <div>
+                            <label for="dia">Diastolic (mmHg)</label>
+                            <input type="number" inputmode="numeric" id="dia" min="30" max="160" step="1"
+                                placeholder="e.g., 80" />
+                        </div>
+                        <div>
+                            <label for="pulse">Pulse (bpm)</label>
+                            <input type="number" inputmode="numeric" id="pulse" min="20" max="240" step="1"
+                                placeholder="optional" />
+                        </div>
+                    </div>
+                    <div class="toolbar">
+                        <button type="submit" class="btn primary"><strong>Add Entry</strong></button>
+                        <span class="notice">You can record weight, BP, or both. Leave any field blank to skip.</span>
+                    </div>
+                </form>
+                <div class="card">
+                    <h3>Quick Stats</h3>
+                    <div class="row">
+                        <div class="pill">Total: <span id="stat-total" class="kbd">0</span></div>
+                        <div class="pill">Weight-only: <span id="stat-w-only" class="kbd">0</span></div>
+                        <div class="pill">BP-only: <span id="stat-bp-only" class="kbd">0</span></div>
+                        <div class="pill">Weight+BP: <span id="stat-both" class="kbd">0</span></div>
+                        <div class="pill">Last 7d avg wt: <span id="stat-avg7" class="kbd">—</span></div>
+                    </div>
+                    <p class="notice" style="margin-top:8px">These are simple counts/averages. Edit or delete rows below
+                        to keep data tidy.</p>
+                </div>
+            </div>
+            <div class="card" style="margin-top:16px">
+                <div class="toolbar" style="justify-content:space-between;align-items:center">
+                    <h3 style="margin:0">History</h3>
+                    <div class="row" style="flex-wrap:nowrap;align-items:center">
+                        <input id="search-entries" placeholder="Search notes… (live)" />
+                        <button class="btn" id="clear-filters" title="Clear search">Clear</button>
+                        <button class="btn" id="btn-export-csv" title="Export CSV">Export CSV</button>
+                    </div>
+                </div>
+                <div style="overflow:auto;">
+                    <table id="table-entries" aria-label="Entries table">
+                        <thead>
+                            <tr>
+                                <th style="min-width:180px">Date/Time</th>
+                                <th>Weight</th>
+                                <th>BMI</th>
+                                <th>BP (sys/dia)</th>
+                                <th>Pulse</th>
+                                <th>Notes</th>
+                                <th style="min-width:120px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- MEDS -->
+        <section class="panel" data-panel="meds" hidden role="tabpanel" aria-labelledby="Medications">
+            <div class="grid grid-2">
+                <form id="form-med" class="card" autocomplete="off">
+                    <h3>Add Medication Dose</h3>
+                    <div class="row">
+                        <div>
+                            <label for="med-dt">Date & Time</label>
+                            <input type="datetime-local" id="med-dt" required />
+                        </div>
+                        <div>
+                            <label for="med-name">Medication</label>
+                            <input type="text" id="med-name" placeholder="e.g., Lisinopril" required />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div>
+                            <label for="med-dose">Dose</label>
+                            <input type="number" inputmode="decimal" id="med-dose" min="0" step="0.5"
+                                placeholder="e.g., 10" required />
+                        </div>
+                        <div>
+                            <label for="med-unit">Unit</label>
+                            <select id="med-unit">
+                                <option>mg</option>
+                                <option>mcg</option>
+                                <option>ml</option>
+                                <option>tabs</option>
+                                <option>caps</option>
+                            </select>
+                        </div>
+                    </div>
+                    <label for="med-notes">Notes (optional)</label>
+                    <input type="text" id="med-notes" placeholder="e.g., after breakfast" />
+                    <div class="toolbar">
+                        <button type="submit" class="btn good"><strong>Add Dose</strong></button>
+                        <span class="notice">Name + dose + time. Edit below if needed.</span>
+                    </div>
+
+
+
+
+                </form>
+                <div class="card">
+                    <h3>Medication Tips</h3>
+                    <ul>
+                        <li>Same med, different doses? Add separate rows.</li>
+                        <li>Use notes for brand/generic or instructions.</li>
+                        <li>“Mark Taken” in Scheduler also logs here.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card" style="margin-top:16px">
+                <div class="toolbar" style="justify-content:space-between;align-items:center">
+                    <h3 style="margin:0">Medication Log</h3>
+                    <div class="row" style="flex-wrap:nowrap;align-items:center">
+                        <input id="search-meds" placeholder="Search medication or notes… (live)" />
+                        <button class="btn" id="clear-meds-filters">Clear</button>
+                    </div>
+                </div>
+                <div style="overflow:auto;">
+                    <table id="table-meds" aria-label="Medication table">
+                        <thead>
+                            <tr>
+                                <th style="min-width:180px">Date/Time</th>
+                                <th>Medication</th>
+                                <th>Dose</th>
+                                <th>Notes</th>
+                                <th style="min-width:120px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+
+
+
+
+
+
+
+
+            </div>
+        </section>
+
+        <!-- SCHEDULER -->
+        <section class="panel" data-panel="schedule" hidden role="tabpanel" aria-labelledby="Scheduler">
+            <div class="grid grid-2">
+                <form id="form-sched" class="card" autocomplete="off">
+                    <h3>Create a Medication Schedule</h3>
+                    <div class="row">
+                        <div style="flex:1 1 100%">
+                            <label>Schedule Type</label>
+                            <div class="row" style="align-items:center">
+                                <label class="pill" style="flex:0 1 auto;"><input type="radio" name="sched-mode"
+                                        value="fixed" id="sched-mode-fixed" checked style="margin-right:6px">Fixed
+                                    times</label>
+                                <label class="pill" style="flex:0 1 auto;"><input type="radio" name="sched-mode"
+                                        value="every" id="sched-mode-every" style="margin-right:6px">Every X
+                                    hours</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div><label for="sched-name">Medication</label><input type="text" id="sched-name"
+                                placeholder="e.g., Lisinopril" required /></div>
+                        <div><label for="sched-dose">Dose</label><input type="number" inputmode="decimal"
+                                id="sched-dose" min="0" step="0.5" placeholder="e.g., 10" required /></div>
+                        <div><label for="sched-unit">Unit</label><select id="sched-unit">
+                                <option>mg</option>
+                                <option>mcg</option>
+                                <option>ml</option>
+                                <option>tabs</option>
+                                <option>caps</option>
+                            </select></div>
+                    </div>
+
+                    <div id="ui-fixed">
+                        <div class="row">
+                            <div><label for="sched-times">Times (24h, comma-separated)</label><input id="sched-times"
+                                    placeholder="08:00, 20:00" /></div>
+                            <div>
+                                <label for="sched-days">Days</label>
+                                <select id="sched-days" class="wide-multi" multiple size="7"
+                                    title="Hold Ctrl/Cmd to multi-select">
+                                    <option value="0">Sunday</option>
+                                    <option value="1">Monday</option>
+                                    <option value="2">Tuesday</option>
+                                    <option value="3">Wednesday</option>
+                                    <option value="4">Thursday</option>
+                                    <option value="5">Friday</option>
+                                    <option value="6">Saturday</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="ui-every" style="display:none">
+                        <div class="row">
+                            <div><label for="sched-every-hours">Every (hours)</label><input type="number"
+                                    id="sched-every-hours" min="2" step="1" value="8" /></div>
+                            <div><label for="sched-first">First dose time (24h)</label><input id="sched-first"
+                                    placeholder="08:00" /></div>
+                            <div><label>&nbsp;</label>
+                                <div class="notice">Repeats continuously every X hours (daily). Days selection is
+                                    ignored.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div><label for="sched-start">Start date</label><input type="date" id="sched-start" /></div>
+                        <div><label for="sched-end">End date (optional)</label><input type="date" id="sched-end" />
+                        </div>
+                        <div><label for="sched-notes">Notes (optional)</label><input type="text" id="sched-notes"
+                                placeholder="e.g., after breakfast" /></div>
+                    </div>
+                    <div class="toolbar">
+                        <button type="submit" class="btn primary"><strong>Add Schedule</strong></button>
+                        <button type="button" class="btn" id="btn-enable-notifs" title="Enable notifications">Enable
+                            Notifications</button>
+                    </div>
+                </form>
+
+                <div class="card">
+                    <h3>Due Soon</h3>
+                    <div class="toolbar">
+                        <button class="btn" id="btn-refresh-due">Refresh</button>
+                        <label class="pill"><input id="chk-auto" type="checkbox" style="margin-right:6px">Auto-check
+                            every minute</label>
+                    </div>
+                    <div id="due-list" class="notice" style="margin-top:8px">Nothing due or overdue in the ±2 hour
+                        window.</div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:16px">
+                <div class="toolbar" style="justify-content:space-between;align-items:center">
+                    <h3 style="margin:0">Schedules</h3>
+                    <div class="row" style="flex-wrap:nowrap;align-items:center">
+                        <input id="search-sched" placeholder="Search schedules… (live)" />
+                        <button class="btn" id="clear-sched-filters">Clear</button>
+                    </div>
+                </div>
+                <div style="overflow:auto;">
+                    <table id="table-sched" aria-label="Medication schedules table">
+                        <thead>
+                            <tr>
+                                <th>Medication</th>
+                                <th>Dose</th>
+                                <th>Times</th>
+                                <th>Days</th>
+                                <th>Start → End</th>
+                                <th>Notes</th>
+                                <th style="min-width:260px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHARTS -->
+        <section class="panel" data-panel="charts" hidden role="tabpanel" aria-labelledby="Charts">
+
+            <!-- NEW: Chart controls -->
+            <div class="card" style="margin-bottom:16px">
+                <div class="toolbar" style="flex-wrap:wrap;gap:12px">
+                    <label class="pill" style="gap:8px">
+                        <span>Time window</span>
+                        <select id="chart-window"
+                            style="background:#0c1320;border:1px solid var(--border);color:var(--ink);border-radius:10px;padding:8px 10px">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                            <option value="180">Last 6 months</option>
+                            <option value="270">Last 9 months</option>
+                            <option value="365">Last 1 year</option>
+                            <option value="all">All time</option>
+                        </select>
+                    </label>
+
+                    <label class="pill" style="gap:8px">
+                        <input id="chart-trend" type="checkbox" checked style="margin-right:6px"> Trendlines
+                    </label>
+
+                    <label class="pill" style="gap:8px">
+                        <input id="chart-bpzones" type="checkbox" checked style="margin-right:6px"> BP_Zones
+                    </label>
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="card chart-wrap">
+                    <h3>Weight</h3>
+                    <canvas id="chart-weight" width="500" height="240" aria-label="Weight chart"></canvas>
+                    <div class="notice">Simple line chart (no external libs). Uses your weight unit per entry.</div>
+
+                    <!-- BMI Chart (added under Weight) -->
+                    <div class="chart-block" id="bmi-chart-block">
+                        <h3 style="margin-top:1rem">BMI</h3>
+                        <canvas id="chart-bmi" width="500" height="240" style="margin-top: -20px;"></canvas>
+                    </div>
+
+                </div>
+                <div class="card chart-wrap">
+                    <h3>Blood Pressure</h3>
+
+                    <!-- Systolic Blood Pressure Chart -->
+                    <h4 style="color: #ccc;">Systolic</h4>
+                    <canvas id="chart-sys" width="500" height="240" style="margin-top: -20px;"></canvas>
+
+                    <!-- Diastolic Blood Pressure Chart -->
+                    <h4 style="color: #ccc;">Diastolic</h4>
+                    <canvas id="chart-dia" width="500" height="240" style="margin-top: -20px;"></canvas>
+
+                    <!-- Pulse Chart -->
+                    <h4 style="color: #ccc;">Pulse</h4>
+                    <canvas id="chart-pulse" width="500" height="240" style="margin-top: -20px;"></canvas>
+                </div>
+            </div>
+    </div>
+    </section>
+
+    <!-- FASTING -->
+    <section class="panel" data-panel="fasting" hidden role="tabpanel" aria-labelledby="Fasting">
+        <div class="grid">
+            <div class="card">
+                <h3>Fasting</h3>
+                <p class="notice">
+                    Start/stop a fast, set a target (12/14/16/18/20h or custom), see a live countdown, and log
+                    notes.
+                    Export to CSV or clear the log. Data stays on your device.
+                </p>
+
+                <div class="row" style="align-items:center">
+                    <label style="flex:0 0 auto">Target:</label>
+                    <select id="fasting-preset" class="wide-multi" style="max-width:160px">
+                        <option value="12">12:12</option>
+                        <option value="14">14:10</option>
+                        <option value="16" selected>16:8</option>
+                        <option value="18">18:6</option>
+                        <option value="20">20:4</option>
+                    </select>
+                    <input id="fasting-custom" type="number" min="1" step="0.5" placeholder="Custom hrs"
+                        style="max-width:140px">
+                    <span class="pill" id="fasting-status">Status: Not fasting</span>
+                </div>
+
+                <div class="toolbar" style="margin-top:8px">
+                    <button class="btn" id="fasting-start"><strong>Start fast</strong></button>
+                    <button class="btn danger" id="fasting-end" disabled>End fast</button>
+                    <span class="pill" id="fasting-countdown">Target end —</span>
+                    <span class="spacer"></span>
+                    <button class="btn" id="fasting-export">Export CSV</button>
+                    <button class="btn" id="fasting-clear">Clear</button>
+                </div>
+
+                <div style="overflow:auto;margin-top:10px">
+                    <table id="fasting-table" aria-label="Fasting table">
+                        <thead>
+                            <tr>
+                                <th style="min-width:180px">Start</th>
+                                <th style="min-width:180px">End</th>
+                                <th>Hours</th>
+                                <th>Note</th>
+                                <th style="min-width:80px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DATA -->
+    <section class="panel" data-panel="data" hidden role="tabpanel" aria-labelledby="Data">
+        <div class="grid">
+            <div class="card">
+                <h3>Export</h3>
+                <p>Download everything as a JSON file you can save or share. You can later import this file to
+                    restore your data.</p>
+                <div class="toolbar">
+                    <button class="btn primary" id="btn-export">Export JSON</button>
+                    <span class="pill">Storage: <span class="kbd">localStorage</span></span>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Import</h3>
+                <p>Select a previously exported JSON file. Choose whether to <strong>Replace</strong> all current
+                    data or <strong>Merge</strong> with it.</p>
+                <div class="row">
+                    <input type="file" id="file-import" accept="application/json" />
+                    <select id="import-mode" title="Import mode">
+                        <option value="replace">Replace existing</option>
+                        <option value="merge">Merge</option>
+                    </select>
+                    <button class="btn warn" id="btn-import">Import</button>
+                </div>
+                <p class="notice">Nothing leaves your device unless you export and share the file.</p>
+            </div>
+            <div class="card">
+                <h3>Backup / Reset</h3>
+                <div class="toolbar">
+                    <button class="btn" id="btn-backup-now">Save backup to browser</button>
+                    <button class="btn danger" id="btn-reset">Erase ALL data</button>
+                </div>
+                <p class="notice">Backup stores a snapshot in <span class="kbd">localStorage.healthDataBackup</span>.
+                    Reset clears everything for a fresh start
+                    (irreversible).</p>
+            </div>
+        </div>
+        <div class="footer">Made with ♥ – single-file app, no internet required.</div>
+    </section>
+
+    <!-- SETTINGS / HELP -->
+    <section class="panel" data-panel="settings" hidden role="tabpanel" aria-labelledby="Settings">
+        <div class="grid grid-2">
+            <div class="card">
+                <h3>Settings</h3>
+                <label for="set-height">Your height (for BMI, optional)</label>
+                <div class="row">
+                    <input id="set-height" placeholder="e.g., 70 (in) or 178 (cm)" />
+                    <select id="set-height-unit">
+                        <option value="in">in</option>
+                        <option value="cm">cm</option>
+                    </select>
+                </div>
+                <label for="set-wunit">Default weight unit</label>
+                <select id="set-wunit">
+                    <option value="lb">lb</option>
+                    <option value="kg">kg</option>
+                </select>
+                <div class="toolbar" style="margin-top:8px">
+                    <button class="btn primary" id="btn-save-settings">Save Settings</button>
+                </div>
+                <p class="notice">BMI shows on hover in charts if height is set.</p>
+            </div>
+            <div class="card">
+                <h3>Install on Phone (PWA)</h3>
+                <ol>
+                    <li><strong>Android (Chrome):</strong> Open this file in Chrome → menu ⋮ → <em>Add to Home
+                            screen</em>.</li>
+                    <li><strong>iPhone/iPad (Safari):</strong> Open this file in Safari → Share → <em>Add to Home
+                            Screen</em>.</li>
+                    <li>App works fully offline once added. Updates: replace the HTML and reopen.</li>
+                </ol>
+                <div class="toolbar">
+                    <button class="btn" id="btn-install" title="Show install prompt (when available)">Install
+                        prompt</button>
+                    <span class="pill">PWA: <span id="pwa-status" class="kbd">initializing…</span></span>
+                </div>
+                <p class="notice">Notifications are optional (Android/Desktop). iOS shows reminders only when app is
+                    open.</p>
+            </div>
+        </div>
+    </section>
+    </div>
+
+    <!-- Reusable confirm dialog -->
+    <div id="confirm-ovl" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+        <div class="modal">
+            <h4 id="confirm-title">Please confirm</h4>
+            <p id="confirm-msg">Are you sure?</p>
+            <div class="actions">
+                <button class="btn" id="confirm-cancel">Cancel</button>
+                <button class="btn danger" id="confirm-ok">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* =========================================================
+           Utilities & Storage
+           ========================================================= */
+        const $ = s => document.querySelector(s);
+        const $$ = s => Array.from(document.querySelectorAll(s));
+
+        function toast(msg, variant = "ok", ms = 1600) {
+            const el = document.createElement('div'); el.className = `toast ${variant}`; el.textContent = msg;
+            document.body.appendChild(el);
+            setTimeout(() => { el.style.transition = 'opacity .35s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 380); }, ms);
+        }
+
+        function confirmDialog(message, { title = "Please confirm", okText = "Confirm", cancelText = "Cancel" } = {}) {
+            return new Promise(resolve => {
+                const ovl = $('#confirm-ovl'), msg = $('#confirm-msg'), ttl = $('#confirm-title');
+                const btnOk = $('#confirm-ok'), btnCancel = $('#confirm-cancel');
+                ttl.textContent = title; msg.textContent = message; ovl.style.display = 'grid';
+                const cleanup = () => {
+                    ovl.style.display = 'none';
+                    btnOk.removeEventListener('click', onOk); btnCancel.removeEventListener('click', onCancel);
+                    document.removeEventListener('keydown', onKey);
+                };
+                const onOk = () => { cleanup(); resolve(true); };
+                const onCancel = () => { cleanup(); resolve(false); };
+                const onKey = (e) => { if (e.key === 'Escape') onCancel(); if (e.key === 'Enter') onOk(); };
+                btnOk.textContent = okText; btnCancel.textContent = cancelText;
+                btnOk.addEventListener('click', onOk); btnCancel.addEventListener('click', onCancel); document.addEventListener('keydown', onKey);
+            });
+        }
+
+        function enhanceButtons() {
+            $$('table button').forEach(b => { if (!b.getAttribute('type')) b.setAttribute('type', 'button'); });
+            const sels = [...document.querySelectorAll('#sched-days, select[data-s="days"]')];
+            sels.forEach(el => el.classList.add('wide-multi'));
+        }
+
+        const fmtDT = iso => new Date(iso).toLocaleString();
+        const daysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const nowLocalDTValue = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
+        const uid = () => Math.random().toString(36).slice(2, 10);
+
+        function safeSched(s) { if (!Array.isArray(s.taken)) s.taken = []; return s; }
+
+        function readStore() {
+            try {
+                const raw = localStorage.getItem('healthData');
+                const empty = {
+                    weightBp: [],
+                    meds: [],
+                    schedules: [],
+                    settings: { height: null, heightUnit: 'in', defaultWUnit: 'lb' },
+                    fasting: { active: false, startISO: null, targetHours: 16, log: [] }
+                };
+                if (!raw) return empty;
+                const obj = JSON.parse(raw);
+
+                return {
+                    weightBp: Array.isArray(obj.weightBp) ? obj.weightBp : [],
+                    meds: Array.isArray(obj.meds) ? obj.meds : [],
+                    schedules: (Array.isArray(obj.schedules) ? obj.schedules : []).map(safeSched),
+                    settings: obj.settings || { height: null, heightUnit: 'in', defaultWUnit: 'lb' },
+                    fasting: (obj.fasting && typeof obj.fasting === 'object') ? {
+                        active: !!obj.fasting.active,
+                        startISO: obj.fasting.startISO || null,
+                        targetHours: Number(obj.fasting.targetHours ?? 16) || 16,
+                        log: Array.isArray(obj.fasting.log) ? obj.fasting.log : []
+                    } : { active: false, startISO: null, targetHours: 16, log: [] }
+                };
+            } catch {
+                return {
+                    weightBp: [],
+                    meds: [],
+                    schedules: [],
+                    settings: { height: null, heightUnit: 'in', defaultWUnit: 'lb' },
+                    fasting: { active: false, startISO: null, targetHours: 16, log: [] }
+                };
+            }
+        }
+
+        function writeStore(data) {
+            data.schedules = (data.schedules || []).map(safeSched);
+            if (!data.fasting) data.fasting = { active: false, startISO: null, targetHours: 16, log: [] };
+            localStorage.setItem('healthData', JSON.stringify(data));
+        }
+
+        /* Stats helpers */
+        function rollingAvgWeight(days = 7) {
+            const { weightBp } = readStore();
+            const since = Date.now() - days * 24 * 3600 * 1000;
+            const arr = weightBp.filter(e => e.weight !== '' && new Date(e.dt).getTime() >= since).map(e => e.weight);
+            if (!arr.length) return null;
+            const s = arr.reduce((a, b) => a + b, 0); return (s / arr.length).toFixed(1);
+        }
+
+        /* =========================================================
+           Tabs
+           ========================================================= */
+        $$('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                $$('.tab-btn').forEach(b => b.setAttribute('aria-selected', 'false'));
+                btn.setAttribute('aria-selected', 'true');
+                const tab = btn.dataset.tab; $$('.panel').forEach(p => p.hidden = p.dataset.panel !== tab);
+                if (tab === 'charts') { drawCharts(); }
+            });
+        });
+
+        /* =========================================================
+           Entries
+           ========================================================= */
+        function stats() {
+            const { weightBp } = readStore();
+            let total = 0, wOnly = 0, bpOnly = 0, both = 0;
+            for (const e of weightBp) {
+                const hasW = e.weight != null && e.weight !== '';
+                const hasBP = e.sys != null && e.dia != null && e.sys !== '' && e.dia !== '';
+                if (hasW || hasBP) total++;
+                if (hasW && hasBP) both++; else if (hasW) wOnly++; else if (hasBP) bpOnly++;
+            }
+            $('#stat-total').textContent = total; $('#stat-w-only').textContent = wOnly; $('#stat-bp-only').textContent = bpOnly; $('#stat-both').textContent = both;
+            const avg7 = rollingAvgWeight(7);
+            $('#stat-avg7').textContent = avg7 ? avg7 : '—';
+        }
+
+        function renderEntries(filter = "") {
+            const { weightBp } = readStore();
+            const tbody = $('#table-entries tbody'); tbody.innerHTML = '';
+            const q = filter.trim().toLowerCase();
+            const rows = weightBp.slice().sort((a, b) => new Date(b.dt) - new Date(a.dt))
+                .filter(e => !q || (e.notes || '').toLowerCase().includes(q))
+                .map(e => {
+                    const tr = document.createElement('tr');
+                    const { settings } = readStore();
+                    let bmiTxt = '';
+                    if (e.weight && settings.height) {
+                        const H = Number(settings.height);
+                        const heightM = settings.heightUnit === 'cm' ? (H / 100) : (H * 0.0254);
+                        const weightKg = e.unit === 'lb' ? e.weight * 0.45359237 : e.weight;
+                        if (heightM > 0) {
+                            const bmi = weightKg / (heightM * heightM);
+                            bmiTxt = bmi.toFixed(1);
+                        }
+                    }
+
+                    tr.innerHTML = `
+                        <td>${fmtDT(e.dt)}</td>
+                        <td>${e.weight ? `${e.weight} ${e.unit || 'lb'}` : ''}</td>
+                        <td>${bmiTxt}</td>
+                        <td>${(e.sys && e.dia) ? `${e.sys}/${e.dia} mmHg` : ''}</td>
+                        <td>${e.pulse || ''}</td>
+                        <td>${e.notes ? e.notes.replace(/</g, '&lt;') : ''}</td>
+                        <td>
+                        <button class="btn" data-act="edit" data-id="${e.id}">Edit</button>
+                        <button class="btn danger" data-act="del" data-id="${e.id}">Delete</button>
+                        </td>`;
+                    return tr;
+                });
+            rows.forEach(r => tbody.appendChild(r));
+            stats();
+        }
+
+        $('#form-entry').addEventListener('submit', async (ev) => {
+            ev.preventDefault();
+            const data = readStore();
+            const dt = $('#entry-dt').value;
+            const notes = $('#entry-notes').value.trim();
+            const weight = $('#weight').value ? Number($('#weight').value) : '';
+            const unit = $('#weight-unit').value;
+            const sys = $('#sys').value ? Number($('#sys').value) : '';
+            const dia = $('#dia').value ? Number($('#dia').value) : '';
+            const pulse = $('#pulse').value ? Number($('#pulse').value) : '';
+            if (!dt) { toast('Please set Date & Time', 'err'); return; }
+            if (weight === '' && (sys === '' || dia === '')) {
+                const ok = await confirmDialog('No weight or BP provided. Save a note-only entry?', { okText: 'Save note', cancelText: 'Go back' });
+                if (!ok) return;
+            }
+            data.weightBp.push({ id: uid(), dt: new Date(dt).toISOString(), weight, unit, sys, dia, pulse, notes });
+            writeStore(data); renderEntries($('#search-entries').value);
+            ev.target.reset(); $('#entry-dt').value = nowLocalDTValue();
+            toast('Entry saved', 'ok');
+        });
+
+        $('#table-entries').addEventListener('click', async (ev) => {
+            const btn = ev.target.closest('button'); if (!btn) return;
+            const id = btn.dataset.id; const data = readStore();
+            if (btn.dataset.act === 'del') {
+                const ok = await confirmDialog('Delete this entry?', { okText: 'Delete', cancelText: 'Cancel' });
+                if (ok) { const i = data.weightBp.findIndex(e => e.id === id); if (i > -1) { data.weightBp.splice(i, 1); writeStore(data); renderEntries($('#search-entries').value); toast('Entry deleted', 'ok'); } }
+            } else if (btn.dataset.act === 'edit') {
+                const e = data.weightBp.find(x => x.id === id); if (!e) return;
+                const tr = btn.closest('tr');
+                tr.innerHTML = `
+                    <td><input type="datetime-local" data-f="dt" value="${(d => { d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16) })(new Date(e.dt))}"></td>
+                    <td><div class="row" style="gap:6px">
+                        <input type="number" inputmode="decimal" style="min-width:100px" data-f="weight" value="${e.weight !== '' ? e.weight : ''}" placeholder="weight">
+                        <select data-f="unit"><option ${e.unit === 'lb' ? 'selected' : ''} value="lb">lb</option><option ${e.unit === 'kg' ? 'selected' : ''} value="kg">kg</option></select>
+                    </div></td>
+                    <td><div class="row" style="gap:6px">
+                        <input type="number" inputmode="numeric" style="min-width:80px" data-f="sys" value="${e.sys !== '' ? e.sys : ''}" placeholder="sys">
+                        <input type="number" inputmode="numeric" style="min-width:80px" data-f="dia" value="${e.dia !== '' ? e.dia : ''}" placeholder="dia">
+                    </div></td>
+                    <td><input type="number" inputmode="numeric" data-f="pulse" value="${e.pulse !== '' ? e.pulse : ''}" placeholder="bpm"></td>
+                    <td><input type="text" data-f="notes" value="${e.notes ? e.notes.replace(/"/g, '&quot;') : ''}"></td>
+                    <td>
+                        <button class="btn good" type="button" data-act="save" data-id="${e.id}">Save</button>
+                        <button class="btn" type="button" data-act="cancel">Cancel</button>
+                    </td>`;
+            } else if (btn.dataset.act === 'save') {
+                const tr = btn.closest('tr'); const v = f => { const el = tr.querySelector(`[data-f="${f}"]`); return el ? el.value : '' };
+                const updated = {
+                    dt: new Date(v('dt')).toISOString(), weight: v('weight') !== '' ? Number(v('weight')) : '', unit: v('unit') || 'lb',
+                    sys: v('sys') !== '' ? Number(v('sys')) : '', dia: v('dia') !== '' ? Number(v('dia')) : '', pulse: v('pulse') !== '' ? Number(v('pulse')) : '', notes: v('notes')
+                };
+                const i = data.weightBp.findIndex(e => e.id === id); if (i > -1) { data.weightBp[i] = { id, ...updated }; writeStore(data); renderEntries($('#search-entries').value); toast('Entry updated', 'ok'); }
+            } else if (btn.dataset.act === 'cancel') { renderEntries($('#search-entries').value); }
+        });
+
+        $('#search-entries').addEventListener('input', e => renderEntries(e.target.value));
+        $('#clear-filters').addEventListener('click', () => { $('#search-entries').value = ''; renderEntries(''); });
+
+        /* CSV export */
+        $('#btn-export-csv').addEventListener('click', () => {
+            const { weightBp, settings } = readStore();
+
+            function computeBMI(e) {
+                // Needs weight in entry + height in settings
+                if (!e.weight || !settings || !settings.height) return '';
+                const H = Number(settings.height);
+                if (!Number.isFinite(H) || H <= 0) return '';
+                const heightM = (settings.heightUnit === 'cm') ? (H / 100) : (H * 0.0254);
+                if (!heightM) return '';
+                const weightKg = (e.unit === 'lb') ? (e.weight * 0.45359237) : e.weight;
+                const bmi = weightKg / (heightM * heightM);
+                return Number.isFinite(bmi) ? bmi.toFixed(1) : '';
+            }
+
+            // NOTE: added "bmi" between unit and sys
+            const rows = [['id', 'datetime', 'weight', 'unit', 'bmi', 'sys', 'dia', 'pulse', 'notes']];
+
+            weightBp.forEach(e => {
+                const bmiVal = computeBMI(e);
+                const safeNotes = (e.notes || '').replace(/"/g, '""');
+                rows.push([
+                    e.id,
+                    e.dt,
+                    e.weight ?? '',
+                    e.unit ?? '',
+                    bmiVal,
+                    e.sys ?? '',
+                    e.dia ?? '',
+                    e.pulse ?? '',
+                    safeNotes
+                ]);
+            });
+
+            // CSV stringify with quotes when needed
+            const csv = rows.map(r =>
+                r.map(v => {
+                    const s = String(v);
+                    return (s.includes(',') || s.includes('"')) ? `"${s}"` : s;
+                }).join(',')
+            ).join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `health-entries-${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+            toast('CSV export started', 'ok', 1100);
+        });
+
+
+        /* =========================================================
+           Meds
+           ========================================================= */
+        function renderMeds(filter = "") {
+            const { meds } = readStore();
+            const tbody = $('#table-meds tbody'); tbody.innerHTML = '';
+            const q = filter.trim().toLowerCase();
+            meds.slice().sort((a, b) => new Date(b.dt) - new Date(a.dt))
+                .filter(m => !q || (m.name + " " + (m.notes || '')).toLowerCase().includes(q))
+                .forEach(m => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${fmtDT(m.dt)}</td>
+                        <td>${m.name.replace(/</g, '&lt;')}</td>
+                        <td>${m.dose} ${m.unit}</td>
+                        <td>${m.notes ? m.notes.replace(/</g, '&lt;') : ''}</td>
+                        <td>
+                        <button class="btn" data-act="edit-med" data-id="${m.id}">Edit</button>
+                        <button class="btn danger" data-act="del-med" data-id="${m.id}">Delete</button>
+                        </td>`;
+                    tbody.appendChild(tr);
+                });
+        }
+
+        $('#form-med').addEventListener('submit', async (ev) => {
+            ev.preventDefault();
+            const dt = $('#med-dt').value; if (!dt) { toast('Set Date & Time', 'err'); return; }
+            const data = readStore();
+            data.meds.push({ id: uid(), dt: new Date(dt).toISOString(), name: $('#med-name').value.trim(), dose: Number($('#med-dose').value), unit: $('#med-unit').value, notes: $('#med-notes').value.trim() });
+            writeStore(data); renderMeds($('#search-meds').value);
+            ev.target.reset(); $('#med-dt').value = nowLocalDTValue();
+            toast('Medication dose added', 'ok');
+        });
+
+        document.querySelector('#table-meds').addEventListener('click', async (ev) => {
+            const btn = ev.target.closest('button'); if (!btn) return; const data = readStore(); const id = btn.dataset.id;
+            if (btn.dataset.act === 'del-med') {
+                const ok = await confirmDialog('Delete this medication entry?', { okText: 'Delete' }); if (ok) {
+                    const i = data.meds.findIndex(m => m.id === id); if (i > -1) { data.meds.splice(i, 1); writeStore(data); renderMeds($('#search-meds').value); toast('Medication entry deleted', 'ok'); }
+                }
+            } else if (btn.dataset.act === 'edit-med') {
+                const m = data.meds.find(x => x.id === id); if (!m) return; const tr = btn.closest('tr');
+                tr.innerHTML = `
+                    <td><input type="datetime-local" data-fm="dt" value="${(d => { d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16) })(new Date(m.dt))}"></td>
+                    <td><input type="text" data-fm="name" value="${m.name.replace(/"/g, '&quot;')}"></td>
+                    <td><div class="row" style="gap:6px">
+                        <input type="number" inputmode="decimal" data-fm="dose" value="${m.dose}" style="min-width:90px">
+                        <select data-fm="unit">${['mg', 'mcg', 'ml', 'tabs', 'caps'].map(u => `<option ${m.unit === u ? 'selected' : ''}>${u}</option>`).join('')}</select>
+                    </div></td>
+                    <td><input type="text" data-fm="notes" value="${m.notes ? m.notes.replace(/"/g, '&quot;') : ''}"></td>
+                    <td>
+                        <button class="btn good" type="button" data-act="save-med" data-id="${m.id}">Save</button>
+                        <button class="btn" type="button" data-act="cancel-med">Cancel</button>
+                    </td>`;
+            } else if (btn.dataset.act === 'save-med') {
+                const tr = btn.closest('tr'); const val = k => tr.querySelector(`[data-fm="${k}"]`).value; const i = data.meds.findIndex(m => m.id === id);
+                if (i > -1) { data.meds[i] = { id, dt: new Date(val('dt')).toISOString(), name: val('name').trim(), dose: Number(val('dose')), unit: val('unit'), notes: val('notes').trim() }; writeStore(data); renderMeds($('#search-meds').value); toast('Medication updated', 'ok'); }
+            } else if (btn.dataset.act === 'cancel-med') { renderMeds($('#search-meds').value); }
+        });
+
+        $('#search-meds').addEventListener('input', e => renderMeds(e.target.value));
+        $('#clear-meds-filters').addEventListener('click', () => { $('#search-meds').value = ''; renderMeds(''); });
+
+        /* =========================================================
+           Scheduler
+           ========================================================= */
+        function parseTimes(str) {
+            return str.split(',').map(s => s.trim()).filter(Boolean).map(t => {
+                if (!/^\d{2}:\d{2}$/.test(t)) return null; const [h, m] = t.split(':').map(Number); if (h > 23 || m > 59) return null;
+                return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            }).filter(Boolean);
+        }
+        function dayIntsFromSelect(sel) { return Array.from(sel.selectedOptions).map(o => Number(o.value)).sort((a, b) => a - b); }
+        const inDateRange = (d, startISO, endISO) => {
+            const day = new Date(d.setHours(0, 0, 0, 0)).getTime();
+            const s = startISO ? new Date(startISO).setHours(0, 0, 0, 0) : null;
+            const e = endISO ? new Date(endISO).setHours(0, 0, 0, 0) : null;
+            return (s === null || day >= s) && (e === null || day <= e);
+        };
+        function updateSchedModeUI() {
+            const mode = document.querySelector('input[name="sched-mode"]:checked').value;
+            $('#ui-fixed').style.display = mode === 'fixed' ? '' : 'none';
+            $('#ui-every').style.display = mode === 'every' ? '' : 'none';
+        }
+        $('#sched-mode-fixed').addEventListener('change', updateSchedModeUI);
+        $('#sched-mode-every').addEventListener('change', updateSchedModeUI);
+
+        function renderSchedules(filter = "") {
+            const { schedules } = readStore();
+            const tbody = $('#table-sched tbody'); tbody.innerHTML = '';
+            const q = filter.trim().toLowerCase();
+            schedules.slice().map(safeSched).sort((a, b) => a.name.localeCompare(b.name))
+                .filter(s => !q || (s.name + " " + (s.notes || '')).toLowerCase().includes(q))
+                .forEach(s => {
+                    const tr = document.createElement('tr');
+                    // Build a label like "½ pill — 10 mg" or "2 pills — 1 caps"
+                    const _qty = Number(s.pillQuantity || 1);
+                    const _pillText = (_qty === 0.5) ? '½ pill' : (Number.isInteger(_qty) ? `${_qty} pill${_qty > 1 ? 's' : ''}` : `${_qty} pills`);
+                    const _unitsToScale = ['mg', 'mcg', 'ml'];
+                    const _scaled = _unitsToScale.includes(s.unit) ? (s.dose * _qty) : s.dose;
+                    const doseCell = `${_pillText} — ${_scaled} ${s.unit}`;
+                    const isEvery = s.mode === 'every';
+                    const timesCell = isEvery ? `Every ${s.everyHours}h (start ${s.first})` : (s.times || []).join(', ');
+                    const daysCell = isEvery ? '<span class="tag ok">Daily</span>' : ((s.days || []).length === 7 ? '<span class="tag ok">Daily</span>' : (s.days || []).map(d => daysShort[d]).join(', '));
+                    tr.innerHTML = `
+                        <td><strong>${s.name.replace(/</g, '&lt;')}</strong></td>
+                        <td>${doseCell}</td>
+                        <td>${timesCell}</td>
+                        <td>${daysCell}</td>
+                        <td>${s.start || '—'} → ${s.end || '—'}</td>
+                        <td>${s.notes ? s.notes.replace(/</g, '&lt;') : ''}</td>
+                        <td>
+                        <button class="btn" data-act="edit-s" data-id="${s.id}">Edit</button>
+                        <button class="btn good" data-act="marknow-s" data-id="${s.id}">Mark Taken Now</button>
+                        <button class="btn danger" data-act="del-s" data-id="${s.id}">Delete</button>
+                        </td>`;
+                    tbody.appendChild(tr);
+                });
+        }
+
+        /* record & check taken occurrences */
+        function recordTakenOccurrence(sched, whenDate) {
+            const iso = whenDate.toISOString(); if (!Array.isArray(sched.taken)) sched.taken = [];
+            const tolMs = 45 * 60 * 1000, whenMs = whenDate.getTime();
+            const exists = sched.taken.some(t => Math.abs(new Date(t).getTime() - whenMs) <= tolMs);
+            if (!exists) sched.taken.push(iso);
+        }
+        function wasOccurrenceTaken(sched, whenDate) {
+            if (!Array.isArray(sched.taken)) return false;
+            const tolMs = 45 * 60 * 1000, whenMs = whenDate.getTime();
+            return sched.taken.some(t => Math.abs(new Date(t).getTime() - whenMs) <= tolMs);
+        }
+
+        $('#form-sched').addEventListener('submit', (ev) => {
+            ev.preventDefault();
+            const mode = document.querySelector('input[name="sched-mode"]:checked').value;
+            const name = $('#sched-name').value.trim();
+            const dose = Number($('#sched-dose').value);
+            const unit = $('#sched-unit').value;
+            const start = $('#sched-start').value || null;
+            const end = $('#sched-end').value || null;
+            const notes = $('#sched-notes').value.trim();
+
+            let times = [], days = [], everyHours = null, first = null;
+            if (mode === 'fixed') {
+                times = parseTimes($('#sched-times').value);
+                days = dayIntsFromSelect($('#sched-days'));
+                if (!name || !times.length || !days.length) { toast('Enter medication, at least one time, and day(s)', 'err'); return; }
+            } else {
+                everyHours = Number($('#sched-every-hours').value);
+                first = ($('#sched-first').value || '').trim();
+                if (!name || !everyHours || everyHours < 2) { toast('Enter medication and every ≥ 2 hours', 'err'); return; }
+                if (!/^\d{2}:\d{2}$/.test(first)) { toast('Enter a valid first time (HH:MM)', 'err'); return; }
+                days = [0, 1, 2, 3, 4, 5, 6]; // daily
+            }
+            const data = readStore();
+
+            // Include pillQuantity from the injected UI
+            const qtyPatch = (window.MedCombo && MedCombo.collectScheduleFormPatch)
+                ? MedCombo.collectScheduleFormPatch()
+                : { pillQuantity: 1 };
+
+            data.schedules.push(safeSched({
+                id: uid(),
+                mode, name, dose, unit,
+                times, days, everyHours, first,
+                start, end, notes,
+                taken: [],
+                ...qtyPatch
+            }));
+
+            writeStore(data); renderSchedules($('#search-sched').value); refreshDue();
+            ev.target.reset(); $('#sched-mode-fixed').checked = true; updateSchedModeUI();
+            toast('Schedule added', 'ok');
+        });
+
+        document.querySelector('#table-sched').addEventListener('click', async (ev) => {
+            const btn = ev.target.closest('button'); if (!btn) return;
+            const act = btn.dataset.act; if (act === 'cancel-s') { renderSchedules($('#search-sched').value); return; }
+            const data = readStore(); const id = btn.dataset.id; const idx = data.schedules.findIndex(s => s.id === id); if (idx < 0) return;
+
+            if (act === 'del-s') {
+                const ok = await confirmDialog('Delete this schedule?', { okText: 'Delete' }); if (ok) {
+                    data.schedules.splice(idx, 1); writeStore(data); renderSchedules($('#search-sched').value); refreshDue(); toast('Schedule deleted', 'ok');
+                }
+            } else if (act === 'edit-s') {
+                const s = data.schedules[idx]; const tr = btn.closest('tr'); const isEvery = s.mode === 'every';
+                tr.innerHTML = `
+                    <td><input type="text" data-s="name" value="${s.name.replace(/"/g, '&quot;')}"/></td>
+                    <td><div class="row" style="gap:6px"><input type="number" inputmode="decimal" data-s="dose" value="${s.dose}" style="min-width:90px">
+                        <select data-s="unit">${['mg', 'mcg', 'ml', 'tabs', 'caps'].map(u => `<option ${s.unit === u ? 'selected' : ''}>${u}</option>`).join('')}</select></div></td>
+                    <td>
+                        <div class="row" style="gap:8px;align-items:center">
+                        <label class="pill" style="flex:0 1 auto;"><input type="radio" name="edit-mode-${s.id}" value="fixed" ${!isEvery ? 'checked' : ''} data-s="mode-fixed" style="margin-right:6px">Fixed</label>
+                        <label class="pill" style="flex:0 1 auto;"><input type="radio" name="edit-mode-${s.id}" value="every" ${isEvery ? 'checked' : ''} data-s="mode-every" style="margin-right:6px">Every</label>
+                        </div>
+                        <div data-s="ui-fixed" style="${isEvery ? 'display:none' : ''};margin-top:8px">
+                        <input data-s="times" value="${(s.times || []).join(', ')}" placeholder="08:00, 20:00"/>
+                        <div class="notice">Times (24h), comma-separated</div>
+                        </div>
+                        <div data-s="ui-every" style="${isEvery ? '' : 'display:none'};margin-top:8px">
+                        <div class="row"><input type="number" data-s="everyHours" min="2" step="1" value="${s.everyHours || 8}" style="min-width:100px">
+                            <input data-s="first" value="${s.first || '08:00'}" placeholder="First time e.g. 08:00" style="min-width:140px"></div>
+                        <div class="notice">Repeats every X hours (daily)</div>
+                        </div>
+                    </td>
+                    <td><select data-s="days" class="wide-multi" multiple size="7" ${isEvery ? 'disabled' : ''}>
+                        ${daysShort.map((d, i) => `<option value="${i}" ${s.days.includes(i) ? 'selected' : ''}>${d}</option>`).join('')}</select></td>
+                    <td><div class="row" style="gap:6px"><input type="date" data-s="start" value="${s.start || ''}"><input type="date" data-s="end" value="${s.end || ''}"></div></td>
+                    <td><input type="text" data-s="notes" value="${s.notes ? s.notes.replace(/"/g, '&quot;') : ''}"></td>
+                    <td><button class="btn good" type="button" data-act="save-s" data-id="${s.id}">Save</button><button class="btn" type="button" data-act="cancel-s">Cancel</button></td>`;
+                const modeFixed = tr.querySelector('[data-s="mode-fixed"]'), modeEvery = tr.querySelector('[data-s="mode-every"]');
+                const uiFixed = tr.querySelector('[data-s="ui-fixed"]'), uiEvery = tr.querySelector('[data-s="ui-every"]'), daysSel = tr.querySelector('[data-s="days"]');
+                const update = () => { const every = modeEvery.checked; uiFixed.style.display = every ? 'none' : ''; uiEvery.style.display = every ? '' : ''; daysSel.disabled = every; };
+                modeFixed.addEventListener('change', update); modeEvery.addEventListener('change', update);
+            } else if (act === 'save-s') {
+                const tr = btn.closest('tr'); const g = k => tr.querySelector(`[data-s="${k}"]`);
+                const mode = g('mode-every') && g('mode-every').checked ? 'every' : 'fixed';
+                let times = [], days = [], everyHours = null, first = null;
+                if (mode === 'every') {
+                    everyHours = Number(g('everyHours').value); first = (g('first').value || '').trim();
+                    if (!everyHours || everyHours < 2) { toast('Enter every ≥ 2 hours', 'err'); return; }
+                    if (!/^\d{2}:\d{2}$/.test(first)) { toast('Enter a valid first time (HH:MM)', 'err'); return; }
+                    days = [0, 1, 2, 3, 4, 5, 6];
+                } else {
+                    times = parseTimes(g('times').value); const daysSel = g('days');
+                    days = Array.from(daysSel.selectedOptions).map(o => Number(o.value)).sort((a, b) => a - b);
+                    if (!times.length || !days.length) { toast('Enter valid times and select day(s)', 'err'); return; }
+                }
+                const data2 = readStore(); const id2 = btn.dataset.id; const idx2 = data2.schedules.findIndex(s => s.id === id2);
+                const prev = safeSched(data2.schedules[idx2]);
+                data2.schedules[idx2] = safeSched({
+                    ...prev, id: id2, mode, name: g('name').value.trim(), dose: Number(g('dose').value), unit: g('unit').value,
+                    times, days, everyHours, first, start: g('start').value || null, end: g('end').value || null, notes: g('notes').value.trim()
+                });
+                writeStore(data2); renderSchedules($('#search-sched').value); refreshDue(); toast('Schedule updated', 'ok');
+            } else if (act === 'marknow-s') {
+                const data3 = readStore(); const s = data3.schedules.find(x => x.id === btn.dataset.id); if (!s) return;
+                const now = new Date();
+                data3.meds.push({ id: uid(), dt: now.toISOString(), name: s.name, dose: s.dose, unit: s.unit, notes: (s.notes || '') + " (Scheduled dose)" });
+
+                recordTakenOccurrence(safeSched(s), now);
+                writeStore(data3); renderMeds($('#search-meds').value);
+                btn.classList.add('good'); btn.textContent = 'Marked ✓'; btn.disabled = true;
+                toast('Dose marked as taken', 'ok'); refreshDue();
+                const _q3 = Number(s.pillQuantity || 1);
+                const _pillText3 = (_q3 === 0.5) ? '½ pill' : (Number.isInteger(_q3) ? `${_q3} pill${_q3 > 1 ? 's' : ''}` : `${_q3} pills`);
+                const _unitsToScale3 = ['mg', 'mcg', 'ml'];
+                const _scaled3 = _unitsToScale3.includes(s.unit) ? (s.dose * _q3) : s.dose;
+                maybeNotify(`Dose taken: ${s.name}`, `${_pillText3} — ${_scaled3} ${s.unit}`);
+            }
+        });
+
+        $('#search-sched').addEventListener('input', e => renderSchedules(e.target.value));
+        $('#clear-sched-filters').addEventListener('click', () => { $('#search-sched').value = ''; renderSchedules(''); });
+
+        function nextOccurrencesWindow(pastHours = 1, futureHours = 2) {
+            const { schedules } = readStore(); const now = new Date();
+            const windowStart = new Date(now.getTime() - pastHours * 3600 * 1000);
+            const windowEnd = new Date(now.getTime() + futureHours * 3600 * 1000);
+            const out = [];
+            for (const raw of schedules) {
+                const s = safeSched(raw);
+                if (s.mode === 'every') {
+                    if (!s.everyHours || !s.first) continue;
+                    const [fh, fm] = s.first.split(':').map(Number);
+                    const anchorDate = s.start ? new Date(s.start + 'T00:00:00') : new Date();
+                    const anchor = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), anchorDate.getDate(), fh, fm);
+                    const periodMs = s.everyHours * 3600 * 1000;
+                    let k = Math.floor((windowStart - anchor) / periodMs) - 1; if (!isFinite(k)) k = 0;
+                    for (let iter = 0; iter < 200; iter++) {
+                        const when = new Date(anchor.getTime() + (k + iter) * periodMs);
+                        if (s.start && !inDateRange(new Date(when), s.start, s.end || null)) continue;
+                        if (when > windowEnd) break;
+                        if (when >= windowStart && when <= windowEnd) { if (!wasOccurrenceTaken(s, when)) out.push({ when, sched: s }); }
+                    }
+                } else {
+                    for (let dOff = -1; dOff <= 1; dOff++) {
+                        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + dOff);
+                        if (!s.days.includes(d.getDay())) continue;
+                        if (!inDateRange(new Date(d), s.start, s.end)) continue;
+                        for (const t of (s.times || [])) {
+                            const [hh, mm] = t.split(':').map(Number);
+                            const when = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hh, mm);
+                            if (when >= windowStart && when <= windowEnd) { if (!wasOccurrenceTaken(s, when)) out.push({ when, sched: s }); }
+                        }
+                    }
+                }
+            }
+            return out.sort((a, b) => a.when - b.when);
+        }
+
+        function refreshDue() {
+            const now = new Date(); const list = nextOccurrencesWindow(1, 2); const box = $('#due-list');
+            if (!list.length) { box.innerHTML = 'Nothing due or overdue in the ±2 hour window.'; return; }
+            box.innerHTML = '';
+            list.forEach(({ when, sched }) => {
+                const overdue = when < now; const soon = !overdue && (when - now) <= 15 * 60 * 1000;
+                const div = document.createElement('div'); div.className = 'pill ' + (overdue ? 'overdue' : (soon ? 'due' : ''));
+                const time = when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const _q = Number(sched.pillQuantity || 1);
+                const _pillText2 = (_q === 0.5) ? '½ pill' : (Number.isInteger(_q) ? `${_q} pill${_q > 1 ? 's' : ''}` : `${_q} pills`);
+                const _unitsToScale2 = ['mg', 'mcg', 'ml'];
+                const _scaled2 = _unitsToScale2.includes(sched.unit) ? (sched.dose * _q) : sched.dose;
+                const doseTag = `${_pillText2} — ${_scaled2} ${sched.unit}`;
+
+                div.innerHTML = `<strong>${overdue ? 'Overdue ' : ''}${time}</strong> – ${sched.name} <span class="tag">${doseTag}</span> ${sched.notes ? ('• ' + sched.notes.replace(/</g, '&lt;')) : ''} <button class="btn good" type="button" data-markid="${sched.id}" data-when="${when.toISOString()}" style="margin-left:8px">Mark Taken</button>`;
+
+                box.appendChild(div);
+            });
+            // notify once per refresh for "soon" items
+            const soon = list.find(x => x.when >= now && (x.when - now) <= 15 * 60 * 1000);
+            if (soon) { maybeNotify(`Upcoming: ${soon.sched.name}`, `Due at ${soon.when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`); }
+        }
+
+        $('#due-list').addEventListener('click', (e) => {
+            const btn = e.target.closest('button'); if (!btn || !btn.dataset.markid) return;
+            const id = btn.dataset.markid; const whenISO = btn.dataset.when; const data = readStore(); const s = data.schedules.find(x => x.id === id); if (!s) return;
+            const when = whenISO ? new Date(whenISO) : new Date();
+            data.meds.push({ id: uid(), dt: new Date().toISOString(), name: s.name, dose: s.dose, unit: s.unit, notes: (s.notes || '') + " (Scheduled dose)" });
+            recordTakenOccurrence(safeSched(s), when);
+            writeStore(data); renderMeds($('#search-meds').value);
+            toast('Dose marked as taken', 'ok'); btn.classList.add('good'); btn.textContent = 'Marked ✓'; btn.disabled = true; refreshDue();
+            const _q3 = Number(s.pillQuantity || 1);
+            const _pillText3 = (_q3 === 0.5) ? '½ pill' : (Number.isInteger(_q3) ? `${_q3} pill${_q3 > 1 ? 's' : ''}` : `${_q3} pills`);
+            const _unitsToScale3 = ['mg', 'mcg', 'ml'];
+            const _scaled3 = _unitsToScale3.includes(s.unit) ? (s.dose * _q3) : s.dose;
+            maybeNotify(`Dose taken: ${s.name}`, `${_pillText3} — ${_scaled3} ${s.unit}`);
+
+        });
+
+        $('#btn-refresh-due').addEventListener('click', refreshDue);
+        let autoTimer = null; $('#chk-auto').addEventListener('change', (e) => { if (e.target.checked) { refreshDue(); autoTimer = setInterval(refreshDue, 60 * 1000); } else { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } } });
+
+        /* =========================================================
+           Charts (Canvas, no libraries)
+           ========================================================= */
+
+
+
+
+        /* ---- Chart preferences (persisted in settings.chartPrefs) ---- */
+        function getChartPrefs() {
+            const { settings } = readStore();
+            const def = { windowDays: 30, showTrend: true, showBPZones: true };
+            const cur = (settings && settings.chartPrefs) ? settings.chartPrefs : {};
+            return { ...def, ...cur };
+        }
+        function setChartPrefs(patch) {
+            const data = readStore();
+            data.settings = data.settings || { height: null, heightUnit: 'in', defaultWUnit: 'lb' };
+            const cur = (data.settings.chartPrefs || getChartPrefs());
+            data.settings.chartPrefs = { ...cur, ...patch };
+            writeStore(data);
+        }
+
+        /* ---- Generic helpers ---- */
+        const DAY_MS = 24 * 3600 * 1000;
+        const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+        /* Trendline drawer for any series [{x,y}] (needs at least 2 points) */
+        function drawTrendline(ctx, series, leftPad, rightPad, topPad, bottomPad, w, h, color = 'rgba(74,168,255,0.75)') {
+            const lr = linearRegressionXY(series);
+            if (!lr) return;
+            const xs = series.map(s => s.x);
+            const minX = Math.min(...xs), maxX = Math.max(...xs);
+            const line = [{ x: minX, y: lr.a + lr.b * minX }, { x: maxX, y: lr.a + lr.b * maxX }];
+            const tPts = mapToCanvas(line, leftPad, rightPad, topPad, bottomPad, w, h);
+            ctx.save();
+            ctx.setLineDash([6, 6]);
+            drawLine(ctx, tPts, color, 2);
+            ctx.setLineDash([]);
+            ctx.restore();
+        }
+
+        /* Convert a data Y-value to canvas pixel Y (using yMin/yMax and paddings) */
+        function valueToYPixel(val, yMin, yMax, topPad, bottomPad, h) {
+            const plotH = h - topPad - bottomPad;
+            const t = (val - yMin) / ((yMax - yMin) || 1);
+            return topPad + (1 - t) * plotH;
+        }
+
+        /* Draw BP zones as background bands (sys or dia) */
+        function drawBPZones(ctx, type, yMin, yMax, leftPad, rightPad, topPad, bottomPad, w, h) {
+            // define bands in mmHg
+            let bands = [];
+            if (type === 'sys') {
+                // <120 normal, 120-129 elevated, 130-139 stage1, >=140 stage2
+                bands = [
+                    { a: -Infinity, b: 120, fill: 'rgba(57,211,83,0.10)' },   // green
+                    { a: 120, b: 129, fill: 'rgba(247,181,0,0.10)' },   // yellow
+                    { a: 129, b: 140, fill: 'rgba(255,165,0,0.10)' },   // orange
+                    { a: 140, b: Infinity, fill: 'rgba(255,107,107,0.12)' } // red
+                ];
+            } else { // 'dia'
+                // <80 normal, 80-89 stage1, >=90 stage2
+                bands = [
+                    { a: -Infinity, b: 80, fill: 'rgba(57,211,83,0.10)' },     // green
+                    { a: 80, b: 90, fill: 'rgba(255,165,0,0.10)' },     // orange
+                    { a: 90, b: Infinity, fill: 'rgba(255,107,107,0.12)' } // red
+                ];
+            }
+
+            const plotW = w - leftPad - rightPad;
+            ctx.save();
+            bands.forEach(({ a, b, fill }) => {
+                const lo = clamp(a, yMin, yMax);
+                const hi = clamp(b, yMin, yMax);
+                if (hi <= lo) return;
+                const yTop = valueToYPixel(hi, yMin, yMax, topPad, bottomPad, h);
+                const yBot = valueToYPixel(lo, yMin, yMax, topPad, bottomPad, h);
+                ctx.fillStyle = fill;
+                ctx.fillRect(leftPad, yTop, plotW, Math.max(1, yBot - yTop));
+            });
+            ctx.restore();
+        }
+
+
+
+
+
+        function drawLine(ctx, pts, color, width = 2) {
+            ctx.beginPath(); for (let i = 0; i < pts.length; i++) { const [x, y] = pts[i]; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+            ctx.lineWidth = width; ctx.strokeStyle = color; ctx.stroke();
+        }
+
+        function scaleSeries(values, leftPad, rightPad, topPad, bottomPad, w, h) {
+            const xs = values.map(v => v.x), ys = values.map(v => v.y);
+            const minX = Math.min(...xs), maxX = Math.max(...xs);
+            const minY = Math.min(...ys), maxY = Math.max(...ys);
+            const dx = (maxX - minX) || 1, dy = (maxY - minY) || 1;
+            const plotW = w - leftPad - rightPad, plotH = h - topPad - bottomPad;
+            return values.map(v => {
+                const x = leftPad + ((v.x - minX) / dx * plotW);
+                const y = topPad + (1 - (v.y - minY) / dy) * plotH;
+                return [x, y];
+            });
+        }
+
+        function drawGrid(ctx, w, h, leftPad, rightPad, topPad, bottomPad) {
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
+            const plotW = w - leftPad - rightPad, plotH = h - topPad - bottomPad;
+            for (let i = 0; i <= 4; i++) { const y = topPad + i * (plotH / 4); ctx.beginPath(); ctx.moveTo(leftPad, y); ctx.lineTo(leftPad + plotW, y); ctx.stroke(); }
+        }
+
+        function drawAxes(ctx, w, h, leftPad, rightPad, topPad, bottomPad, {
+            yTicks = 4,
+            yMin = null,
+            yMax = null,
+            yUnit = '',       // kept for API compatibility, not used on ticks
+            xLabels = []
+        } = {}) {
+            const plotW = w - leftPad - rightPad;
+            const plotH = h - topPad - bottomPad;
+
+            // Axes lines
+            ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            // y-axis
+            ctx.moveTo(leftPad, topPad);
+            ctx.lineTo(leftPad, topPad + plotH);
+            // x-axis
+            ctx.lineTo(leftPad + plotW, topPad + plotH);
+            ctx.stroke();
+
+            // Y ticks + labels (NO units here)
+            if (yTicks > 0) {
+                ctx.fillStyle = '#97a3b6';
+                ctx.font = '12px system-ui';
+                for (let i = 0; i <= yTicks; i++) {
+                    const t = i / yTicks;
+                    const y = topPad + (1 - t) * plotH;
+                    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+                    ctx.beginPath();
+                    ctx.moveTo(leftPad, y);
+                    ctx.lineTo(leftPad + plotW, y);
+                    ctx.stroke();
+                    if (yMin != null && yMax != null) {
+                        const val = yMin + t * (yMax - yMin);
+                        ctx.fillText(`${Math.round(val)}`, Math.max(4, leftPad - 30), y + 4); // ← no unit
+                    }
+                }
+            }
+
+            // X labels (unchanged)
+            if (Array.isArray(xLabels)) {
+                ctx.fillStyle = '#97a3b6';
+                ctx.font = '12px system-ui';
+                xLabels.forEach(({ xPixel, text }) => {
+                    ctx.fillText(text, Math.min(leftPad + plotW - 20, Math.max(leftPad, xPixel - 10)), topPad + plotH + 16);
+                });
+            }
+        }
+
+        function linearRegressionXY(values) {
+            // values: [{x: Number, y: Number}]
+            const n = values.length;
+            if (n < 2) return null;
+            let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+            for (const v of values) { sumX += v.x; sumY += v.y; sumXY += v.x * v.y; sumXX += v.x * v.x; }
+            const denom = (n * sumXX - sumX * sumX);
+            if (!denom) return null;
+            const b = (n * sumXY - sumX * sumY) / denom; // slope
+            const a = (sumY - b * sumX) / n;             // intercept
+            return { a, b };
+        }
+
+        function mapToCanvas(points, leftPad, rightPad, topPad, bottomPad, w, h) {
+            return scaleSeries(points, leftPad, rightPad, topPad, bottomPad, w, h);
+        }
+
+        function drawPoints(ctx, pts, radius = 3) {
+            ctx.fillStyle = '#e8edf7';
+            for (const [x, y] of pts) {
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function formatDateShort(tsMs) {
+            const d = new Date(tsMs);
+            return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        }
+
+        function nearestPoint(mouseX, mouseY, pts, maxDist = 12) {
+            // pts: [{x,y,meta}]
+            let best = null, bestD = Infinity;
+            for (const p of pts) {
+                const dx = p.x - mouseX, dy = p.y - mouseY;
+                const d = Math.hypot(dx, dy);
+                if (d < bestD && d <= maxDist) { bestD = d; best = p; }
+            }
+            return best;
+        }
+
+        function attachTooltip(canvas, generator) {
+            let tip = document.createElement('div');
+            tip.className = 'chart-tip';
+            tip.style.display = 'none';
+            document.body.appendChild(tip);
+
+            function show(text, evt) {
+                tip.textContent = text;
+                tip.style.display = 'block';
+                tip.style.left = (evt.clientX + 12) + 'px';
+                tip.style.top = (evt.clientY + 12) + 'px';
+            }
+            function hide() { tip.style.display = 'none'; }
+
+            canvas.addEventListener('mousemove', (evt) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = evt.clientX - rect.left;
+                const y = evt.clientY - rect.top;
+                const text = generator({ x, y, evt });
+                if (text) show(text, evt); else hide();
+            });
+            canvas.addEventListener('mouseleave', hide);
+        }
+
+        function drawUnitPill(ctx, text, x, y) {
+            // Draws a small rounded pill label inside the canvas at (x,y)
+            ctx.font = '12px system-ui';
+            const padX = 8, padY = 4;
+            const metrics = ctx.measureText(text);
+            const w = Math.ceil(metrics.width) + padX * 2;
+            const h = 20; // fixed height for consistency
+            const r = 10; // corner radius
+
+            // Background pill
+            ctx.save();
+            ctx.beginPath();
+            // rounded rect
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+            ctx.fillStyle = '#1b2334';                 // matches your --pill
+            ctx.strokeStyle = 'rgba(36,48,71,1)';      // matches your --border
+            ctx.lineWidth = 1;
+            ctx.fill();
+            ctx.stroke();
+
+            // Text
+            ctx.fillStyle = '#e8edf7';                 // matches your --ink
+            ctx.fillText(text, x + padX, y + h - padY - 2);
+            ctx.restore();
+        }
+
+
+
+        /* Initialize chart controls and listeners */
+        function initChartControls() {
+            const prefs = getChartPrefs();
+            const winSel = $('#chart-window');
+            const trend = $('#chart-trend');
+            const zones = $('#chart-bpzones');
+
+            if (winSel) winSel.value = String(prefs.windowDays);
+            if (trend) trend.checked = !!prefs.showTrend;
+            if (zones) zones.checked = !!prefs.showBPZones;
+
+            winSel?.addEventListener('change', (e) => {
+                const v = e.target.value === 'all' ? 'all' : Number(e.target.value);
+                setChartPrefs({ windowDays: v });
+                drawCharts();
+            });
+            trend?.addEventListener('change', (e) => {
+                setChartPrefs({ showTrend: !!e.target.checked });
+                drawCharts();
+            });
+            zones?.addEventListener('change', (e) => {
+                setChartPrefs({ showBPZones: !!e.target.checked });
+                drawCharts();
+            });
+        }
+
+
+
+
+        function drawCharts() {
+            const { weightBp, settings } = readStore();
+            const prefs = getChartPrefs();
+            const sinceMs = prefs.windowDays === 'all' ? -Infinity : (Date.now() - Number(prefs.windowDays) * DAY_MS);
+
+
+
+            // ---- Common paddings
+            const left = 44, right = 12, top = 14, bottom = 24;
+
+            /* ================= Weight chart ================= */
+            (function () {
+                const cw = $('#chart-weight');
+                const ctx = cw.getContext('2d');
+                ctx.clearRect(0, 0, cw.width, cw.height);
+
+                const wtEntries = weightBp
+                    .filter(e => e.weight !== '' && !isNaN(e.weight))
+                    .filter(e => new Date(e.dt).getTime() >= sinceMs)
+                    .sort((a, b) => new Date(a.dt) - new Date(b.dt));
+
+                if (!wtEntries.length) {
+                    ctx.fillStyle = '#97a3b6';
+                    ctx.fillText('No weight data yet', 12, 20);
+                    return;
+                }
+
+                // Data series
+                const series = wtEntries.map(e => ({ x: new Date(e.dt).getTime(), y: e.weight, unit: e.unit || 'lb', dt: e.dt }));
+                // Bounds for Y axis
+                const yVals = series.map(s => s.y);
+                const yMin = Math.floor(Math.min(...yVals));
+
+                const yMax = Math.ceil(Math.max(...yVals));
+                const unitLabel = series[series.length - 1].unit;
+
+                // X labels: 4 spread-out ticks
+                const w = cw.width, h = cw.height;
+                const xs = series.map(s => s.x);
+                const minX = Math.min(...xs), maxX = Math.max(...xs);
+                const plotW = w - left - right;
+                const xLabels = [];
+                for (let i = 0; i <= 4; i++) {
+                    const t = i / 4;
+                    const xVal = minX + t * (maxX - minX);
+                    const xPix = left + t * plotW;
+                    xLabels.push({ xPixel: xPix, text: formatDateShort(xVal) });
+                }
+
+                // Axes + grid
+                drawAxes(ctx, w, h, left, right, top, bottom, {
+                    yTicks: 4,
+                    yMin, yMax,
+                    yUnit: ` ${unitLabel}`,
+                    xLabels
+                });
+
+                // Show unit once inside the plot (top-left)
+                drawUnitPill(ctx, `Weight (${unitLabel})`, left + 6, top + 6);
+
+                // Plot line
+                const pts = mapToCanvas(series, left, right, top, bottom, w, h);
+                drawGrid(ctx, w, h, left, right, top, bottom);  // subtle grid already
+                drawLine(ctx, pts, '#4aa8ff', 2);
+                drawPoints(ctx, pts, 3);
+
+                // NEW: toggleable trendline
+                if (getChartPrefs().showTrend) {
+                    drawTrendline(ctx, series, left, right, top, bottom, w, h, 'rgba(74,168,255,0.75)');
+                }
+
+                // Tooltip with BMI
+                attachTooltip(cw, ({ x, y }) => {
+                    // make searchable point list with metadata
+                    const pointList = pts.map((p, i) => ({
+                        x: p[0], y: p[1],
+                        meta: series[i]
+                    }));
+                    const hit = nearestPoint(x, y, pointList, 10);
+                    if (!hit) return '';
+                    const s = hit.meta;
+                    // BMI if height known
+                    let bmiTxt = '';
+                    const H = settings && settings.height ? Number(settings.height) : null;
+                    if (H && !isNaN(H)) {
+                        // Normalize height to meters depending on unit selection
+                        // settings.heightUnit: 'in' | 'cm'
+                        const unit = (settings.heightUnit || 'in');
+                        const heightM = unit === 'cm' ? (H / 100) : (H * 0.0254);
+                        const weightKg = (s.unit === 'lb') ? (s.y * 0.45359237) : s.y;
+                        const bmi = weightKg / (heightM * heightM);
+                        bmiTxt = `, BMI ${bmi.toFixed(1)}`;
+                    }
+                    const dstr = new Date(s.dt).toLocaleString();
+                    return `Weight: ${s.y} ${s.unit} • ${dstr}${bmiTxt}`;
+                });
+            })();
+
+            /* ================= BMI chart ================= */
+            (function () {
+                const cb = $('#chart-bmi');
+                const ctx = cb.getContext('2d');
+                ctx.clearRect(0, 0, cb.width, cb.height);
+
+                const { weightBp, settings } = readStore();
+
+                // Only include entries with weight and valid height
+                if (!settings.height || !weightBp.length) {
+                    ctx.fillStyle = '#97a3b6';
+                    ctx.fillText('No BMI data (set height in Settings)', 12, 20);
+                    return;
+                }
+
+                const heightM = (settings.heightUnit === 'cm')
+                    ? (settings.height / 100)
+                    : (settings.height * 0.0254);
+
+                if (!heightM || isNaN(heightM) || heightM <= 0) {
+                    ctx.fillStyle = '#97a3b6';
+                    ctx.fillText('Invalid height in Settings', 12, 20);
+                    return;
+                }
+
+                const bmiEntries = weightBp
+                    .filter(e => e.weight !== '' && !isNaN(e.weight))
+                    .filter(e => new Date(e.dt).getTime() >= sinceMs)
+                    .sort((a, b) => new Date(a.dt) - new Date(b.dt))
+                    .map(e => {
+                        const weightKg = (e.unit === 'lb') ? e.weight * 0.45359237 : e.weight;
+                        const bmi = weightKg / (heightM * heightM);
+                        return { x: new Date(e.dt).getTime(), y: bmi, dt: e.dt };
+                    });
+
+                if (!bmiEntries.length) {
+                    ctx.fillStyle = '#97a3b6';
+                    ctx.fillText('No BMI data yet', 12, 20);
+                    return;
+                }
+
+                // Prepare axes
+                const w = cb.width, h = cb.height;
+                const xs = bmiEntries.map(e => e.x);
+                const ys = bmiEntries.map(e => e.y);
+                const minX = Math.min(...xs), maxX = Math.max(...xs);
+                const yMin = Math.floor(Math.min(...ys));
+                const yMax = Math.ceil(Math.max(...ys));
+                const plotW = w - 44 - 12;
+                const xLabels = [];
+                for (let i = 0; i <= 4; i++) {
+                    const t = i / 4;
+                    const xVal = minX + t * (maxX - minX);
+                    const xPix = 44 + t * plotW;
+                    xLabels.push({ xPixel: xPix, text: formatDateShort(xVal) });
+                }
+
+                drawAxes(ctx, w, h, 44, 12, 14, 24, {
+                    yTicks: 4,
+                    yMin, yMax,
+                    yUnit: ' BMI',
+                    xLabels
+                });
+                drawGrid(ctx, w, h, 44, 12, 14, 24);
+                drawUnitPill(ctx, 'BMI', 50, 20);
+
+                const pts = mapToCanvas(bmiEntries, 44, 12, 14, 24, w, h);
+                drawLine(ctx, pts, '#ff6b6b', 2);
+                drawPoints(ctx, pts, 3);
+
+                if (getChartPrefs().showTrend) {
+                    drawTrendline(ctx, bmiEntries, 44, 12, 14, 24, w, h, 'rgba(255,107,107,0.75)');
+                }
+
+                attachTooltip(cb, ({ x, y }) => {
+                    const pointList = pts.map((p, i) => ({
+                        x: p[0], y: p[1],
+                        meta: bmiEntries[i]
+                    }));
+                    const hit = nearestPoint(x, y, pointList, 10);
+                    if (!hit) return '';
+                    const s = hit.meta;
+                    const dstr = new Date(s.dt).toLocaleString();
+                    return `BMI: ${s.y.toFixed(1)} • ${dstr}`;
+                });
+            })();
+
+            /* ================= Systolic chart ================= */
+            (function () {
+                const cs = $('#chart-sys');
+                const ctx = cs.getContext('2d');
+                ctx.clearRect(0, 0, cs.width, cs.height);
+
+                const entries = weightBp
+                    .filter(e => e.sys !== '' && !isNaN(e.sys))
+                    .filter(e => new Date(e.dt).getTime() >= sinceMs)
+                    .map(e => ({ dt: new Date(e.dt), sys: Number(e.sys) }))
+                    .sort((a, b) => a.dt - b.dt);
+
+                if (!entries.length) {
+                    ctx.fillStyle = '#97a3b6';
+                    ctx.fillText('No Systolic data yet', 12, 20);
+                    return;
+                }
+
+                const w = cs.width, h = cs.height;
+                const xs = entries.map(e => e.dt.getTime());
+                const series = entries.map(e => ({ x: e.dt.getTime(), y: e.sys, dt: e.dt }));
+
+                const yVals = series.map(s => s.y);
+                const yMin = Math.floor(Math.min(...yVals) / 10) * 10;
+                const yMax = Math.ceil(Math.max(...yVals) / 10) * 10;
+                const minX = Math.min(...xs), maxX = Math.max(...xs);
+
+                const plotW = w - left - right;
+                const xLabels = [];
+                for (let i = 0; i <= 4; i++) {
+                    const t = i / 4;
+                    const xVal = minX + t * (maxX - minX);
+                    const xPix = left + t * plotW;
+                    xLabels.push({ xPixel: xPix, text: formatDateShort(xVal) });
+                }
+
+                drawAxes(ctx, w, h, left, right, top, bottom, {
+                    yTicks: 4,
+                    yMin, yMax,
+                    yUnit: ' mmHg',
+                    xLabels
+                });
+
+                if (getChartPrefs().showBPZones) {
+                    drawBPZones(ctx, 'sys', yMin, yMax, left, right, top, bottom, w, h);
+                }
+
+                drawGrid(ctx, w, h, left, right, top, bottom);
+                drawUnitPill(ctx, 'Systolic (mmHg)', left + 6, top + 6);
+
+                const pts = mapToCanvas(series, left, right, top, bottom, w, h);
+                drawLine(ctx, pts, '#2bd980', 2);
+                drawPoints(ctx, pts, 3);
+
+                if (getChartPrefs().showTrend) {
+                    drawTrendline(ctx, series, left, right, top, bottom, w, h, 'rgba(43,217,128,0.75)');
+                }
+
+                attachTooltip(cs, ({ x, y }) => {
+                    const pointList = pts.map((p, i) => ({
+                        x: p[0], y: p[1],
+                        meta: series[i]
+                    }));
+                    const hit = nearestPoint(x, y, pointList, 10);
+                    if (!hit) return '';
+                    const s = hit.meta;
+                    const dstr = new Date(s.dt).toLocaleString();
+                    return `Systolic: ${s.y} mmHg • ${dstr}`;
+                });
+            })();
+
+            /* ================= Diastolic chart ================= */
+            (function () {
+                const cd = $('#chart-dia');
+                const ctx = cd.getContext('2d');
+                ctx.clearRect(0, 0, cd.width, cd.height);
+
+                const entries = weightBp
+                    .filter(e => e.dia !== '' && !isNaN(e.dia))
+                    .filter(e => new Date(e.dt).getTime() >= sinceMs)
+                    .map(e => ({ dt: new Date(e.dt), dia: Number(e.dia) }))
+                    .sort((a, b) => a.dt - b.dt);
+
+                if (!entries.length) {
+                    ctx.fillStyle = '#97a3b6';
+                    ctx.fillText('No Diastolic data yet', 12, 20);
+                    return;
+                }
+
+                const w = cd.width, h = cd.height;
+                const xs = entries.map(e => e.dt.getTime());
+                const series = entries.map(e => ({ x: e.dt.getTime(), y: e.dia, dt: e.dt }));
+
+                const yVals = series.map(s => s.y);
+                const yMin = Math.floor(Math.min(...yVals) / 10) * 10;
+                const yMax = Math.ceil(Math.max(...yVals) / 10) * 10;
+                const minX = Math.min(...xs), maxX = Math.max(...xs);
+
+                const plotW = w - left - right;
+                const xLabels = [];
+                for (let i = 0; i <= 4; i++) {
+                    const t = i / 4;
+                    const xVal = minX + t * (maxX - minX);
+                    const xPix = left + t * plotW;
+                    xLabels.push({ xPixel: xPix, text: formatDateShort(xVal) });
+                }
+
+                drawAxes(ctx, w, h, left, right, top, bottom, {
+                    yTicks: 4,
+                    yMin, yMax,
+                    yUnit: ' mmHg',
+                    xLabels
+                });
+
+                if (getChartPrefs().showBPZones) {
+                    drawBPZones(ctx, 'dia', yMin, yMax, left, right, top, bottom, w, h);
+                }
+
+                drawGrid(ctx, w, h, left, right, top, bottom);
+                drawUnitPill(ctx, 'Diastolic (mmHg)', left + 6, top + 6);
+
+                const pts = mapToCanvas(series, left, right, top, bottom, w, h);
+                drawLine(ctx, pts, '#f7b500', 2);
+                drawPoints(ctx, pts, 3);
+
+                if (getChartPrefs().showTrend) {
+                    drawTrendline(ctx, series, left, right, top, bottom, w, h, 'rgba(247,181,0,0.8)');
+                }
+
+                attachTooltip(cd, ({ x, y }) => {
+                    const pointList = pts.map((p, i) => ({
+                        x: p[0], y: p[1],
+                        meta: series[i]
+                    }));
+                    const hit = nearestPoint(x, y, pointList, 10);
+                    if (!hit) return '';
+                    const s = hit.meta;
+                    const dstr = new Date(s.dt).toLocaleString();
+                    return `Diastolic: ${s.y} mmHg • ${dstr}`;
+                });
+            })();
+
+            /* ================= Pulse chart ================= */
+            (function () {
+                const cp = $('#chart-pulse');
+                const ctx = cp.getContext('2d');
+                ctx.clearRect(0, 0, cp.width, cp.height);
+
+                const entries = weightBp
+                    .filter(e => e.pulse !== '' && !isNaN(e.pulse))
+                    .filter(e => new Date(e.dt).getTime() >= sinceMs)
+                    .map(e => ({ dt: new Date(e.dt), pulse: Number(e.pulse) }))
+                    .sort((a, b) => a.dt - b.dt);
+
+                if (!entries.length) {
+                    ctx.fillStyle = '#97a3b6';
+                    ctx.fillText('No Pulse data yet', 12, 20);
+                    return;
+                }
+
+                const w = cp.width, h = cp.height;
+                const xs = entries.map(e => e.dt.getTime());
+                const series = entries.map(e => ({ x: e.dt.getTime(), y: e.pulse, dt: e.dt }));
+
+                const yVals = series.map(s => s.y);
+                const yMin = Math.floor(Math.min(...yVals) / 10) * 10;
+                const yMax = Math.ceil(Math.max(...yVals) / 10) * 10;
+                const minX = Math.min(...xs), maxX = Math.max(...xs);
+
+                const plotW = w - left - right;
+                const xLabels = [];
+                for (let i = 0; i <= 4; i++) {
+                    const t = i / 4;
+                    const xVal = minX + t * (maxX - minX);
+                    const xPix = left + t * plotW;
+                    xLabels.push({ xPixel: xPix, text: formatDateShort(xVal) });
+                }
+
+                drawAxes(ctx, w, h, left, right, top, bottom, {
+                    yTicks: 4,
+                    yMin, yMax,
+                    yUnit: ' bpm',
+                    xLabels
+                });
+
+                drawGrid(ctx, w, h, left, right, top, bottom);
+                drawUnitPill(ctx, 'Pulse (bpm)', left + 6, top + 6);
+
+                const pts = mapToCanvas(series, left, right, top, bottom, w, h);
+                drawLine(ctx, pts, '#4aa8ff', 2);
+                drawPoints(ctx, pts, 3);
+
+                if (getChartPrefs().showTrend) {
+                    drawTrendline(ctx, series, left, right, top, bottom, w, h, 'rgba(74,168,255,0.75)');
+                }
+
+                attachTooltip(cp, ({ x, y }) => {
+                    const pointList = pts.map((p, i) => ({
+                        x: p[0], y: p[1],
+                        meta: series[i]
+                    }));
+                    const hit = nearestPoint(x, y, pointList, 10);
+                    if (!hit) return '';
+                    const s = hit.meta;
+                    const dstr = new Date(s.dt).toLocaleString();
+                    return `Pulse: ${s.y} bpm • ${dstr}`;
+                });
+            })();
+        }
+
+        /* =========================================================
+           Fasting (inline)
+           ========================================================= */
+        function hoursBetween(a, b) { return (new Date(b) - new Date(a)) / 36e5; }
+        function asDuration(h) { const m = Math.round(h * 60), H = Math.floor(m / 60), M = m % 60; return `${H}h ${M}m`; }
+
+        let fastingTimer = null;
+
+        function renderFasting() {
+            const data = readStore();
+            const f = data.fasting;
+
+            // UI elements
+            const preset = $('#fasting-preset');
+            const custom = $('#fasting-custom');
+            const status = $('#fasting-status');
+            const countdown = $('#fasting-countdown');
+            const btnStart = $('#fasting-start');
+            const btnEnd = $('#fasting-end');
+            const tbody = $('#fasting-table tbody');
+
+            // target hours from UI
+            const getTargetFromUI = () => {
+                const c = parseFloat(custom.value);
+                return (!isNaN(c) && c > 0) ? c : Number(preset.value || 16);
+            };
+
+            // sync UI controls -> data
+            const pushTargetToData = () => {
+                const d = readStore();
+                d.fasting.targetHours = getTargetFromUI();
+                writeStore(d);
+            };
+
+            preset.value = String(f.targetHours || 16);
+            custom.value = '';
+
+            preset.onchange = pushTargetToData;
+            custom.onchange = pushTargetToData;
+            custom.oninput = pushTargetToData;
+
+            // status + countdown
+            function drawStatus() {
+                if (f.active && f.startISO) {
+                    const now = new Date();
+                    const elapsed = hoursBetween(f.startISO, now);
+                    const remaining = Math.max(0, (f.targetHours || 16) - elapsed);
+                    status.textContent = `Status: Fasting since ${new Date(f.startISO).toLocaleString()} • Elapsed ${asDuration(elapsed)} • Remaining ${asDuration(remaining)}`;
+                    btnStart.disabled = true; btnEnd.disabled = false;
+
+                    const targetEnd = new Date(new Date(f.startISO).getTime() + (f.targetHours || 16) * 36e5);
+                    const ms = Math.max(0, targetEnd - now);
+                    const H = Math.floor(ms / 36e5);
+                    const M = Math.floor(ms % 36e5 / 6e4);
+                    const S = Math.floor(ms % 6e4 / 1e3);
+                    countdown.textContent = `Target end ${targetEnd.toLocaleString()} · ${String(H).padStart(2, '0')}:${String(M).padStart(2, '0')}:${String(S).padStart(2, '0')}`;
+                } else {
+                    status.textContent = 'Status: Not fasting';
+                    countdown.textContent = 'Target end —';
+                    btnStart.disabled = false; btnEnd.disabled = true;
+                }
+            }
+
+            function drawTable() {
+                tbody.innerHTML = '';
+                const rows = (f.log || []).slice().sort((a, b) => new Date(b.start) - new Date(a.start));
+                rows.forEach((r, idx) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${new Date(r.start).toLocaleString()}</td>
+                        <td>${r.end ? new Date(r.end).toLocaleString() : '—'}</td>
+                        <td>${(r.hours != null) ? r.hours.toFixed(2) : '—'}</td>
+                        <td><input type="text" value="${(r.note || '').replace(/"/g, '&quot;')}"></td>
+                        <td><button class="btn danger" type="button">Delete</button></td>
+                    `;
+                    // note edit
+                    tr.querySelector('input').addEventListener('change', (e) => {
+                        const d = readStore();
+                        const realIdx = d.fasting.log.findIndex(x => x.start === r.start && x.end === r.end);
+                        if (realIdx > -1) {
+                            d.fasting.log[realIdx].note = e.target.value;
+                            writeStore(d);
+                        }
+                    });
+                    // delete
+                    tr.querySelector('button').addEventListener('click', async () => {
+                        const ok = await confirmDialog('Delete this fasting row?', { okText: 'Delete' });
+                        if (!ok) return;
+                        const d = readStore();
+                        d.fasting.log = d.fasting.log.filter(x => !(x.start === r.start && x.end === r.end));
+                        writeStore(d);
+                        renderFasting();
+                        toast('Row deleted', 'ok');
+                    });
+                    tbody.appendChild(tr);
+                });
+            }
+
+            function startTicker() {
+                if (fastingTimer) clearInterval(fastingTimer);
+                if (f.active && f.startISO) {
+                    fastingTimer = setInterval(() => {
+                        const d = readStore();
+                        f.active = d.fasting.active; f.startISO = d.fasting.startISO; f.targetHours = d.fasting.targetHours;
+                        drawStatus();
+                    }, 1000);
+                }
+            }
+
+            // wire buttons
+            btnStart.onclick = () => {
+                const d = readStore();
+                if (d.fasting.active) return;
+                d.fasting.active = true;
+                d.fasting.startISO = new Date().toISOString();
+                d.fasting.targetHours = getTargetFromUI();
+                d.fasting.log.push({ start: d.fasting.startISO, end: null, hours: null, note: '' });
+                writeStore(d);
+                renderFasting();
+                toast('Fast started', 'ok');
+            };
+
+            btnEnd.onclick = () => {
+                const d = readStore();
+                if (!d.fasting.active) return;
+                d.fasting.active = false;
+                const endISO = new Date().toISOString();
+                const last = (d.fasting.log || []).slice().reverse().find(x => !x.end);
+                if (last) {
+                    last.end = endISO;
+                    last.hours = hoursBetween(last.start, endISO);
+                }
+                writeStore(d);
+                renderFasting();
+                toast('Fast ended', 'ok');
+            };
+
+            $('#fasting-export').onclick = () => {
+                const rows = (readStore().fasting.log || []);
+                const headers = ['start_iso', 'end_iso', 'hours', 'note'];
+                const csv = [headers.join(',')].concat(
+                    rows.map(r => [r.start, r.end || '', (r.hours != null ? r.hours.toFixed(2) : ''), (r.note || '').replace(/,/g, ';')].join(','))
+                ).join('\n');
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'fasting_log.csv';
+                a.click();
+                URL.revokeObjectURL(a.href);
+                toast('CSV export started', 'ok', 1100);
+            };
+
+            $('#fasting-clear').onclick = async () => {
+                const ok = await confirmDialog('Clear all fasting data? This cannot be undone.', { okText: 'Clear' });
+                if (!ok) return;
+                const d = readStore();
+                d.fasting = { active: false, startISO: null, targetHours: 16, log: [] };
+                writeStore(d);
+                renderFasting();
+                toast('Fasting data cleared', 'warn');
+            };
+
+            drawStatus();
+            drawTable();
+            startTicker();
+        }
+
+        /* =========================================================
+           Import / Export / Backup
+           ========================================================= */
+        $('#btn-export').addEventListener('click', () => {
+            const data = readStore(); const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a'); const ts = new Date().toISOString().replace(/[:.]/g, '-');
+            a.href = URL.createObjectURL(blob); a.download = `health-data-${ts}.json`; a.click(); URL.revokeObjectURL(a.href);
+            toast('Export started', 'ok', 1100);
+        });
+        $('#btn-import').addEventListener('click', async () => {
+            try {
+                const inp = $('#file-import');
+                if (!inp || !inp.files || !inp.files[0]) { toast('Choose a JSON file first', 'err'); return; }
+                const file = inp.files[0];
+                const text = await file.text();
+                const incoming = JSON.parse(text);
+
+                const current = readStore();
+
+                function uniqBy(list, getKey) {
+                    const m = new Map();
+                    list.forEach(x => m.set(getKey(x), x));
+                    return Array.from(m.values());
+                }
+                function normF(x) {
+                    if (!x || typeof x !== 'object') return { active: false, startISO: null, targetHours: 16, log: [] };
+                    return {
+                        active: !!x.active,
+                        startISO: x.startISO || null,
+                        targetHours: Number(x.targetHours ?? 16) || 16,
+                        log: Array.isArray(x.log) ? x.log : []
+                    };
+                }
+
+                // Merge fasting (dedupe by start|end, keep an active fast if either side is active)
+                const curF = normF(current.fasting);
+                const incF = normF(incoming.fasting);
+
+                const keyOf = r => `${r.start}|${r.end || ''}`;
+                const map = new Map(curF.log.map(r => [keyOf(r), r]));
+                incF.log.forEach(r => map.set(keyOf(r), r));
+                const mergedLog = Array.from(map.values()).sort((a, b) => new Date(a.start) - new Date(b.start));
+
+                const mergedActive = curF.active || incF.active;
+                const mergedStart = mergedActive ? (incF.startISO || curF.startISO) : null;
+                const mergedTarget = Number.isFinite(incF.targetHours) ? incF.targetHours : curF.targetHours;
+
+                // Merge the rest (simple union-by-id)
+                const mergedWeightBp = uniqBy(
+                    [...(current.weightBp || []), ...((incoming.weightBp || []))],
+                    x => x.id || x.dt || JSON.stringify(x)
+                );
+                const mergedMeds = uniqBy(
+                    [...(current.meds || []), ...((incoming.meds || []))],
+                    x => x.id || x.dt || JSON.stringify(x)
+                );
+                const mergedSchedules = uniqBy(
+                    [...(current.schedules || []), ...((incoming.schedules || []))],
+                    x => x.id || x.name || JSON.stringify(x)
+                ).map(safeSched);
+
+                const mergedSettings = incoming.settings || current.settings;
+
+                writeStore({
+                    weightBp: mergedWeightBp,
+                    meds: mergedMeds,
+                    schedules: mergedSchedules,
+                    settings: mergedSettings,
+                    fasting: {
+                        active: mergedActive,
+                        startISO: mergedStart,
+                        targetHours: mergedTarget,
+                        log: mergedLog
+                    }
+                });
+
+                renderEntries && renderEntries('');
+                renderMeds && renderMeds('');
+                renderSchedules && renderSchedules('');
+                stats && stats();
+                typeof refreshDue === 'function' && refreshDue();
+                renderFasting && renderFasting();
+
+                toast('Import (merge) complete', 'ok');
+            } catch (e) {
+                console.error(e);
+                toast('Import failed. Is the file a valid JSON export?', 'error');
+            }
+        });
+
+        $('#btn-backup-now').addEventListener('click', () => { localStorage.setItem('healthDataBackup', localStorage.getItem('healthData') || ''); toast('Backup saved to browser', 'ok'); });
+        $('#btn-reset').addEventListener('click', async () => {
+            const ok = await confirmDialog('This will ERASE ALL entries, medications, schedules and settings. This cannot be undone. Proceed?', { okText: 'Erase all', cancelText: 'Cancel' });
+            if (!ok) return;
+            localStorage.removeItem('healthData'); renderEntries(''); renderMeds(''); renderSchedules(''); stats(); refreshDue(); renderFasting(); toast('All data cleared', 'warn');
+        });
+
+        /* =========================================================
+           Settings
+           ========================================================= */
+        function loadSettingsUI() {
+            const { settings } = readStore();
+            $('#set-height').value = settings.height ?? '';
+            $('#set-height-unit').value = settings.heightUnit || 'in';
+            $('#set-wunit').value = settings.defaultWUnit || 'lb';
+        }
+        $('#btn-save-settings').addEventListener('click', () => {
+            const data = readStore();
+            const heightRaw = $('#set-height').value.trim(); const height = heightRaw === '' ? null : Number(heightRaw);
+            data.settings = {
+                height: height ?? null,
+                heightUnit: $('#set-height-unit').value,
+                defaultWUnit: $('#set-wunit').value
+            };
+            writeStore(data);
+            toast('Settings saved', 'ok');
+        });
+        /* Default weight unit applies to new Entries form */
+        function syncDefaultWeightUnit() {
+            const { settings } = readStore();
+            if (settings && settings.defaultWUnit) $('#weight-unit').value = settings.defaultWUnit;
+        }
+
+        /* =========================================================
+           Notifications (optional)
+           ========================================================= */
+        async function enableNotifications() {
+            try {
+                const perm = await Notification.requestPermission();
+                if (perm === 'granted') { toast('Notifications enabled', 'ok'); } else { toast('Notifications blocked', 'warn'); }
+                updatePwaStatus();
+            } catch { toast('Notifications not supported', 'warn'); }
+        }
+        function maybeNotify(title, body) {
+            try {
+                if (Notification && Notification.permission === 'granted') {
+                    new Notification(title, { body, icon: genIconDataUrl('#4aa8ff') });
+                }
+            } catch {/* ignore */ }
+        }
+        $('#btn-enable-notifs').addEventListener('click', enableNotifications);
+
+        /* =========================================================
+           PWA: Inline manifest + inline service worker (Blob)
+           ========================================================= */
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; updatePwaStatus('ready'); });
+        $('#btn-install').addEventListener('click', async () => {
+            if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; deferredPrompt = null; updatePwaStatus(outcome === 'accepted' ? 'installed?' : 'dismissed'); }
+            else { toast('Install prompt not available yet. Add to Home Screen from browser menu.', 'warn'); }
+        });
+
+        function genIconSVG(fill) {
+            return `
+            <svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+                <rect rx="36" ry="36" width="192" height="192" fill="#0b0f16"/>
+                <circle cx="96" cy="96" r="64" fill="${fill}"/>
+                <path d="M60 100c12 0 18 10 36 10s24-10 36-10" stroke="#0b0f16" stroke-width="10" fill="none" stroke-linecap="round"/>
+            </svg>`;
+        }
+        function genIconDataUrl(fill) { return 'data:image/svg+xml;utf8,' + encodeURIComponent(genIconSVG(fill || '#4aa8ff')); }
+
+        function registerPWA() {
+            try {
+                const manifest = {
+                    name: "Health Tracker",
+                    short_name: "Health",
+                    start_url: ".",
+                    display: "standalone",
+                    background_color: "#0b0f16",
+                    theme_color: "#0b0f16",
+                    icons: [
+                        { src: genIconDataUrl('#4aa8ff'), sizes: "192x192", type: "image/svg+xml" },
+                        { src: genIconDataUrl('#2bd980'), sizes: "512x512", type: "image/svg+xml" }
+                    ]
+                };
+                const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('link'); link.rel = 'manifest'; link.href = url; document.head.appendChild(link);
+
+                if ('serviceWorker' in navigator) {
+                    const swCode = `
+                        const CACHE='health-tracker-v1';
+                        self.addEventListener('install',e=>{ e.waitUntil((async()=>{
+                        const cache=await caches.open(CACHE);
+                        const req=new Request(self.registration.scope, {cache:'reload'});
+                        const res=await fetch(req);
+                        await cache.put(self.registration.scope, res);
+                        self.skipWaiting();
+                        })()); });
+                        self.addEventListener('activate',e=>{ e.waitUntil(self.clients.claim()); });
+                        self.addEventListener('fetch',e=>{
+                        e.respondWith((async()=>{
+                            const cache=await caches.open(CACHE);
+                            const cached=await cache.match(e.request);
+                            if(cached) return cached;
+                            try{ const res=await fetch(e.request); return res; }catch(err){ return cached || Response.error(); }
+                        })());
+                        });
+                    `;
+                    const swUrl = URL.createObjectURL(new Blob([swCode], { type: 'text/javascript' }));
+                    navigator.serviceWorker.register(swUrl).then(() => updatePwaStatus()).catch(() => updatePwaStatus('sw-failed'));
+                } else updatePwaStatus('no-sw');
+            } catch { updatePwaStatus('manifest-failed'); }
+        }
+        function updatePwaStatus(extra) {
+            let status = 'ok';
+            if (!('serviceWorker' in navigator)) status = 'no-sw';
+            else if (!navigator.serviceWorker.controller) status = 'registered (first load)';
+            else status = 'ready';
+            if (Notification && Notification.permission) status += ` • notif: ${Notification.permission}`;
+            if (extra) status += ` • ${extra}`;
+            $('#pwa-status').textContent = status;
+        }
+
+        /* ----- Swipe-to-switch-tabs (mobile) ---------------------------------- */
+        /* Paste this AFTER your existing tab code, before init() runs (or inside init()) */
+
+        (function addSwipeForTabs() {
+            const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            if (!isTouch) return;                           // Only on touch devices
+
+            const tabs = Array.from(document.querySelectorAll('.tab-btn'));
+            const panels = Array.from(document.querySelectorAll('.panel'));
+            if (!tabs.length || !panels.length) return;
+
+            // Helper: go to a tab by index
+            function selectTab(idx) {
+                if (idx < 0 || idx >= tabs.length) return;
+                tabs.forEach(b => b.setAttribute('aria-selected', 'false'));
+                tabs[idx].setAttribute('aria-selected', 'true');
+                const name = tabs[idx].dataset.tab;
+                panels.forEach(p => p.hidden = (p.dataset.panel !== name));
+                // If your charts refresh on tab switch, you can trigger here if needed:
+                if (typeof drawCharts === 'function' && name === 'charts') drawCharts();
+            }
+
+            function currentTabIndex() {
+                return Math.max(0, tabs.findIndex(b => b.getAttribute('aria-selected') === 'true'));
+            }
+
+            // Attach to the main scrolling area; whole page also works.
+            const surface = document.querySelector('.wrap') || document.body;
+
+            let startX = 0, startY = 0, tracking = false, multi = 0;
+            const THRESHOLD = 50;     // px horizontal movement required
+            const MAX_ANGLE = 30;     // degrees from horizontal allowed
+
+            surface.addEventListener('touchstart', (e) => {
+                multi = e.touches.length;
+                if (multi !== 1) return;                        // ignore multi-touch
+                // Don’t steal swipes while typing/selecting
+                const ae = document.activeElement;
+                if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT')) return;
+
+                const t = e.touches[0];
+                startX = t.clientX; startY = t.clientY; tracking = true;
+            }, { passive: true });
+
+            surface.addEventListener('touchmove', (e) => {
+                if (!tracking || e.touches.length !== 1) return;
+                const t = e.touches[0];
+                const dx = t.clientX - startX;
+                const dy = t.clientY - startY;
+                // If the gesture is mostly vertical, let the page scroll naturally
+                if (Math.abs(dy) > Math.abs(dx)) return;
+                // Prevent accidental horizontal scroll shimmer once we’re clearly swiping sideways
+                if (Math.abs(dx) > 12) e.preventDefault();
+            }, { passive: false });
+
+            surface.addEventListener('touchend', (e) => {
+                if (!tracking) return; tracking = false;
+                // Ignore if it ended with multiple touches
+                if (multi !== 1) return;
+
+                const changed = e.changedTouches && e.changedTouches[0];
+                if (!changed) return;
+                const dx = changed.clientX - startX;
+                const dy = changed.clientY - startY;
+
+                // Require mostly-horizontal swipe and pass threshold
+                const dist = Math.hypot(dx, dy);
+                const angle = Math.abs(Math.atan2(dy, dx) * 180 / Math.PI);
+                if (dist >= THRESHOLD && (angle <= MAX_ANGLE || angle >= (180 - MAX_ANGLE))) {
+                    const idx = currentTabIndex();
+                    if (dx < 0) selectTab(idx + 1);   // swipe left -> next tab
+                    else if (dx > 0) selectTab(idx - 1);   // swipe right -> prev tab
+                }
+            }, { passive: true });
+        })();
+
+        /* =========================================================
+           Init
+           ========================================================= */
+        // function init() {
+        //     registerPWA();
+
+        //     $('#entry-dt').value = nowLocalDTValue(); $('#med-dt').value = nowLocalDTValue();
+        //     updateSchedModeUI(); renderEntries(''); renderMeds(''); renderSchedules(''); refreshDue(); enhanceButtons();
+        //     loadSettingsUI(); syncDefaultWeightUnit(); renderFasting();
+        // }
+
+        function init() {
+            registerPWA();
+
+            $('#entry-dt').value = nowLocalDTValue(); $('#med-dt').value = nowLocalDTValue();
+            updateSchedModeUI(); renderEntries(''); renderMeds(''); renderSchedules(''); refreshDue(); enhanceButtons();
+            loadSettingsUI(); syncDefaultWeightUnit(); renderFasting();
+
+            // NEW
+            initChartControls();
+        }
+
+
+        init();
+
+        //<!-- BEGIN: Combo Meds + Split Pill Auto-Inject (drop-in) -->
+        /* 
+          Auto-Inject support for:
+           1) Combo medications (multiple ingredients per pill)
+           2) Split/partial pills in Scheduler (e.g., 0.5, 1.5, etc.)
+        
+          How to install (explicit):
+          1) Find the exact line: </body>
+          2) Replace that single line with this entire block PLUS the closing </body> at the end.
+             (Meaning: paste this whole block right before </body> so the last two characters in the file are </body></html> as before.)
+        */
+
+        (function () {
+            function $(sel, root = document) { return root.querySelector(sel); }
+            function $all(sel, root = document) { return Array.from(root.querySelectorAll(sel)); }
+
+            function makeEl(tag, attrs = {}, html = "") {
+                const el = document.createElement(tag);
+                Object.entries(attrs).forEach(([k, v]) => {
+                    if (k === "class") el.className = v;
+                    else if (k === "style") el.setAttribute("style", v);
+                    else el.setAttribute(k, v);
+                });
+                if (html) el.innerHTML = html;
+                return el;
+            }
+
+            // Try to borrow existing classes for consistent styling
+            function borrowClasses(exampleEl, fallback) {
+                if (!exampleEl) return fallback;
+                const cls = exampleEl.className || "";
+                return cls.trim() ? cls : fallback;
+            }
+
+            // Attempt to locate key UI spots without knowing exact IDs
+            function locateMedicationForm() {
+                // Heuristics: heading text "Medication" or container with id/class containing "med"
+                const candidates = $all('section, div, form').filter(el => {
+                    const idc = (el.id + " " + el.className).toLowerCase();
+                    return /medication|meds/.test(idc) || /medication/i.test(el.textContent);
+                });
+                // Prefer the one that contains inputs for name/strength
+                for (const c of candidates) {
+                    const hasName = $all('input[type="text"], input').some(i => /(name|med)/i.test(i.name || i.id || i.placeholder || ""));
+                    const hasStrength = $all('input[type="number"], input').some(i => /(strength|mg)/i.test(i.name || i.id || i.placeholder || ""));
+                    if (hasName && hasStrength) return c;
+                }
+                return null;
+            }
+
+            function locateStrengthRow(root) {
+                // Find the element (row) that contains the strength input
+                const inputs = $all('input[type="number"], input', root);
+                for (const inp of inputs) {
+                    const hint = (inp.name || "") + " " + (inp.id || "") + " " + (inp.placeholder || "");
+                    if (/strength|mg|milligram/i.test(hint)) {
+                        return inp.closest('.form-row') || inp.parentElement;
+                    }
+                }
+                return null;
+            }
+
+            function locateSchedulerForm() {
+                const candidates = $all('section, div, form').filter(el => {
+                    const idc = (el.id + " " + el.className).toLowerCase();
+                    return /sched|schedule|reminder/.test(idc) || /schedule/i.test(el.textContent);
+                });
+                // Prefer the one that has a time picker or med selector
+                for (const c of candidates) {
+                    const hasTime = $all('input[type="time"], input').some(i => /(time|at)/i.test(i.name || i.id || i.placeholder || ""));
+                    const hasMedSel = $all('select, input').some(i => /(med|drug)/i.test(i.name || i.id || i.placeholder || ""));
+                    if (hasTime || hasMedSel) return c;
+                }
+                return null;
+            }
+
+            function locateDoseRow(root) {
+                const inputs = $all('input, select', root);
+                for (const el of inputs) {
+                    const hint = (el.name || "") + " " + (el.id || "") + " " + (el.placeholder || "") + " " + (el.outerHTML || "");
+                    if (/dose|qty|quantity|pill/i.test(hint)) {
+                        return el.closest('.form-row') || el.parentElement;
+                    }
+                }
+                return null;
+            }
+
+            // ----------------- Build Combo UI -----------------
+            function buildComboUI(exampleRow) {
+                const formRowClass = borrowClasses(exampleRow, 'form-row');
+                const btnClass = borrowClasses($('button', exampleRow), 'btn');
+                const btnSecondaryClass = btnClass + ' btn-secondary';
+                const btnDangerClass = btnClass + ' btn-danger';
+                const inputClass = borrowClasses($('input', exampleRow), 'input');
+                const labelClass = borrowClasses($('label', exampleRow), 'form-label');
+                const helpClass = borrowClasses($('.help-text', exampleRow), 'help-text');
+
+                const toggleRow = makeEl('div', { class: formRowClass, id: 'med-combo-toggle-row', style: "margin-top:0.5rem;" }, `
+                    <label class="${labelClass}">
+                        <input type="checkbox" id="medIsCombo"> Combo medication (multiple ingredients)
+                    </label>
+                    `);
+
+                const componentsWrap = makeEl('div', { class: formRowClass, id: 'medComponentsWrap', style: "display:none; margin-top:0.5rem;" }, `
+                    <div style="font-weight:600; margin-bottom:0.25rem;">Components</div>
+                    <div id="medComponentsList"></div>
+                    <button type="button" id="addMedComponentBtn" class="${btnSecondaryClass}" style="margin-top:0.5rem;">+ Add component</button>
+                    <div class="${helpClass}" style="margin-top:0.25rem;">Example: Lisinopril 20 mg + Hydrochlorothiazide 25 mg</div>
+                    `);
+
+                function renderComponentRow(name = '', strength = '') {
+                    const row = makeEl('div', { class: 'component-row', style: 'display:grid;grid-template-columns:1fr 120px auto;gap:0.5rem;margin-bottom:0.35rem;' });
+                    row.appendChild(makeEl('input', { type: 'text', class: inputClass + ' comp-name', placeholder: 'Ingredient (e.g., Lisinopril)', value: name }));
+                    row.appendChild(makeEl('input', { type: 'number', class: inputClass + ' comp-strength', placeholder: 'mg', min: '0', step: '0.5', value: strength }));
+                    const rm = makeEl('button', { type: 'button', class: btnDangerClass + ' remove-comp' }, 'Remove');
+                    rm.addEventListener('click', () => row.remove());
+                    row.appendChild(rm);
+                    return row;
+                }
+
+                return { toggleRow, componentsWrap, renderComponentRow };
+            }
+
+            // ----------------- Build Pill Quantity UI -----------------
+            function buildPillQtyUI(exampleRow) {
+                const formRowClass = borrowClasses(exampleRow, 'form-row');
+                const labelClass = borrowClasses($('label', exampleRow), 'form-label');
+                const inputClass = borrowClasses($('input', exampleRow), 'input');
+                const chipBtnClass = borrowClasses($('button', exampleRow), 'btn') + ' btn-chip';
+
+                const wrap = makeEl('div', { class: formRowClass, id: 'pillQtyWrap', style: 'margin-top:0.5rem;' });
+                const label = makeEl('label', { class: labelClass, for: 'pillQuantity' }, 'Pill quantity');
+                const input = makeEl('input', { id: 'pillQuantity', type: 'number', step: '0.25', min: '0.25', value: '1', class: inputClass, style: 'max-width:120px;' });
+                const chips = makeEl('div', { id: 'pillQtyQuick', style: 'margin-top:0.25rem;' });
+                ['0.5', '1', '1.5', '2'].forEach(q => {
+                    const b = makeEl('button', { type: 'button', class: chipBtnClass, 'data-qty': q }, (q === '0.5' ? '½' : q));
+                    b.addEventListener('click', () => { input.value = q; input.dispatchEvent(new Event('input')); });
+                    chips.appendChild(b);
+                });
+                const help = makeEl('div', { class: 'help-text', style: 'margin-top:0.25rem;' }, 'You can type any decimal (e.g., 0.5, 0.75, 1.25)');
+                wrap.appendChild(label); wrap.appendChild(input); wrap.appendChild(chips); wrap.appendChild(help);
+                return { wrap, input };
+            }
+
+            // ----------------- MedCombo Logic -----------------
+            const MedCombo = (() => {
+                function stripTrailingZeros(n) {
+                    return (Math.round(n * 1000) / 1000).toString().replace(/\.0+$/, '');
+                }
+                return {
+                    collectMedFormPatch() {
+                        const isCombo = !!$('#medIsCombo')?.checked;
+                        if (!isCombo) return { isCombo: false, components: [] };
+                        const rows = $all('.component-row', $('#medComponentsWrap'));
+                        const components = rows.map(r => {
+                            const name = $('.comp-name', r)?.value?.trim() || '';
+                            const strength = parseFloat($('.comp-strength', r)?.value || '0');
+                            return name && strength > 0 ? { name, strengthMg: strength } : null;
+                        }).filter(Boolean);
+                        return { isCombo: true, components };
+                    },
+                    loadMedIntoForm(med) {
+                        const isCombo = !!med?.isCombo;
+                        const toggle = $('#medIsCombo');
+                        const wrap = $('#medComponentsWrap');
+                        const list = $('#medComponentsList');
+                        if (!toggle || !wrap || !list) return;
+                        toggle.checked = isCombo;
+                        wrap.style.display = isCombo ? '' : 'none';
+                        list.innerHTML = '';
+                        if (isCombo && Array.isArray(med.components)) {
+                            med.components.forEach(c => {
+                                const row = document.createElement('div');
+                                row.className = 'component-row';
+                                row.style.display = 'grid';
+                                row.style.gridTemplateColumns = '1fr 120px auto';
+                                row.style.gap = '0.5rem';
+                                row.style.marginBottom = '0.35rem';
+                                row.innerHTML = `
+                                    <input type="text" class="input comp-name" placeholder="Ingredient (e.g., Lisinopril)" value="${c.name || ''}">
+                                    <input type="number" class="input comp-strength" placeholder="mg" min="0" step="0.5" value="${c.strengthMg || ''}">
+                                    <button type="button" class="btn btn-danger remove-comp">Remove</button>`;
+                                list.appendChild(row);
+                                $('.remove-comp', row)?.addEventListener('click', () => row.remove());
+                            });
+                        } else if (isCombo) {
+                            // ensure at least one row
+                            const row = document.createElement('div');
+                            row.className = 'component-row';
+                            row.style.display = 'grid';
+                            row.style.gridTemplateColumns = '1fr 120px auto';
+                            row.style.gap = '0.5rem';
+                            row.style.marginBottom = '0.35rem';
+                            row.innerHTML = `
+                                <input type="text" class="input comp-name" placeholder="Ingredient (e.g., Lisinopril)">
+                                <input type="number" class="input comp-strength" placeholder="mg" min="0" step="0.5">
+                                <button type="button" class="btn btn-danger remove-comp">Remove</button>`;
+                            list.appendChild(row);
+                            $('.remove-comp', row)?.addEventListener('click', () => row.remove());
+                        }
+                    },
+                    collectScheduleFormPatch() {
+                        const qty = parseFloat($('#pillQuantity')?.value || '1');
+                        return { pillQuantity: (isFinite(qty) && qty > 0) ? qty : 1 };
+                    },
+                    formatDoseLabel(med, sched) {
+                        const qty = Math.max(parseFloat(sched?.pillQuantity) || 1, 0.25);
+                        const pillText = (qty === 0.5) ? '½ pill' : (Number.isInteger(qty) ? `${qty} pill${qty > 1 ? 's' : ''}` : `${qty} pills`);
+                        if (med?.isCombo && Array.isArray(med.components) && med.components.length) {
+                            const comps = med.components.map(c => {
+                                const mg = (parseFloat(c.strengthMg) || 0) * qty;
+                                return `${c.name} ${stripTrailingZeros(mg)} mg`;
+                            }).join(' + ');
+                            return `${pillText} — ${comps}`;
+                        }
+                        const base = parseFloat(med?.strengthMg) || 0;
+                        const total = base * qty;
+                        return base > 0 ? `${pillText} — ${stripTrailingZeros(total)} mg` : pillText;
+                    }
+                };
+            })();
+
+            // Expose to global so your existing save/render code can call it
+            window.MedCombo = MedCombo;
+
+            // ----------------- Inject UI -----------------
+            document.addEventListener('DOMContentLoaded', () => {
+                // 1) Medications: inject combo UI after the Strength row
+                const medForm = locateMedicationForm();
+                if (medForm) {
+                    const strengthRow = locateStrengthRow(medForm) || medForm;
+                    const { toggleRow, componentsWrap, renderComponentRow } = buildComboUI(strengthRow);
+                    strengthRow.insertAdjacentElement('afterend', componentsWrap);
+                    strengthRow.insertAdjacentElement('afterend', toggleRow);
+                    const addBtn = $('#addMedComponentBtn', componentsWrap);
+                    const list = $('#medComponentsList', componentsWrap);
+                    function ensureOne() { if (list && !list.children.length) list.appendChild(renderComponentRow()); }
+                    addBtn?.addEventListener('click', () => list.appendChild(renderComponentRow()));
+                    $('#medIsCombo')?.addEventListener('change', (e) => {
+                        const on = e.target.checked;
+                        componentsWrap.style.display = on ? '' : 'none';
+                        if (on) ensureOne();
+                    });
+                }
+
+                // 2) Scheduler: inject pill quantity near dose row (or at end if not found)
+                const schedForm = locateSchedulerForm();
+                if (schedForm) {
+                    const doseRow = locateDoseRow(schedForm) || schedForm;
+                    const { wrap } = buildPillQtyUI(doseRow);
+                    doseRow.insertAdjacentElement('afterend', wrap);
+                }
+            });
+
+        })();
+        //<!-- END: Combo Meds + Split Pill Auto-Inject -->
+
+    </script>
+</body>
+
+</html>
