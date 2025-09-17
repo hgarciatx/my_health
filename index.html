@@ -388,6 +388,11 @@
             color: var(--ink);
         }
     </style>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
 </head>
 
 <body>
@@ -2700,9 +2705,181 @@
            2) Split/partial pills in Scheduler (e.g., 0.5, 1.5, etc.)
         
           How to install (explicit):
-          1) Find the exact line: </body>
-          2) Replace that single line with this entire block PLUS the closing </body> at the end.
-             (Meaning: paste this whole block right before </body> so the last two characters in the file are </body></html> as before.)
+          1) Find the exact line: 
+<script>
+// === PWA bootstrap ===
+(function () {
+  const statusEl = document.querySelector("#pwa-status");
+  const btnInstall = document.querySelector("#btn-install");
+
+  // Service Worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js")
+      .then(() => { if (statusEl) statusEl.textContent = "ready"; })
+      .catch(() => { if (statusEl) statusEl.textContent = "error"; });
+  } else {
+    if (statusEl) statusEl.textContent = "unsupported";
+  }
+
+  // Install prompt (Android/desktop)
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (statusEl) statusEl.textContent = "installable";
+    if (btnInstall) btnInstall.disabled = false;
+  });
+
+  if (btnInstall) {
+    btnInstall.disabled = true;
+    btnInstall.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (statusEl) statusEl.textContent = (outcome === "accepted") ? "installed" : "dismissed";
+      deferredPrompt = null;
+      btnInstall.disabled = true;
+    });
+  }
+
+  // Standalone detection (iOS and others)
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+  if (standalone && statusEl) statusEl.textContent = "installed";
+})();
+</script>
+
+</body>
+          2) Replace that single line with this entire block PLUS the closing 
+<script>
+// === PWA bootstrap ===
+(function () {
+  const statusEl = document.querySelector("#pwa-status");
+  const btnInstall = document.querySelector("#btn-install");
+
+  // Service Worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js")
+      .then(() => { if (statusEl) statusEl.textContent = "ready"; })
+      .catch(() => { if (statusEl) statusEl.textContent = "error"; });
+  } else {
+    if (statusEl) statusEl.textContent = "unsupported";
+  }
+
+  // Install prompt (Android/desktop)
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (statusEl) statusEl.textContent = "installable";
+    if (btnInstall) btnInstall.disabled = false;
+  });
+
+  if (btnInstall) {
+    btnInstall.disabled = true;
+    btnInstall.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (statusEl) statusEl.textContent = (outcome === "accepted") ? "installed" : "dismissed";
+      deferredPrompt = null;
+      btnInstall.disabled = true;
+    });
+  }
+
+  // Standalone detection (iOS and others)
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+  if (standalone && statusEl) statusEl.textContent = "installed";
+})();
+</script>
+
+</body> at the end.
+             (Meaning: paste this whole block right before 
+<script>
+// === PWA bootstrap ===
+(function () {
+  const statusEl = document.querySelector("#pwa-status");
+  const btnInstall = document.querySelector("#btn-install");
+
+  // Service Worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js")
+      .then(() => { if (statusEl) statusEl.textContent = "ready"; })
+      .catch(() => { if (statusEl) statusEl.textContent = "error"; });
+  } else {
+    if (statusEl) statusEl.textContent = "unsupported";
+  }
+
+  // Install prompt (Android/desktop)
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (statusEl) statusEl.textContent = "installable";
+    if (btnInstall) btnInstall.disabled = false;
+  });
+
+  if (btnInstall) {
+    btnInstall.disabled = true;
+    btnInstall.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (statusEl) statusEl.textContent = (outcome === "accepted") ? "installed" : "dismissed";
+      deferredPrompt = null;
+      btnInstall.disabled = true;
+    });
+  }
+
+  // Standalone detection (iOS and others)
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+  if (standalone && statusEl) statusEl.textContent = "installed";
+})();
+</script>
+
+</body> so the last two characters in the file are 
+<script>
+// === PWA bootstrap ===
+(function () {
+  const statusEl = document.querySelector("#pwa-status");
+  const btnInstall = document.querySelector("#btn-install");
+
+  // Service Worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js")
+      .then(() => { if (statusEl) statusEl.textContent = "ready"; })
+      .catch(() => { if (statusEl) statusEl.textContent = "error"; });
+  } else {
+    if (statusEl) statusEl.textContent = "unsupported";
+  }
+
+  // Install prompt (Android/desktop)
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (statusEl) statusEl.textContent = "installable";
+    if (btnInstall) btnInstall.disabled = false;
+  });
+
+  if (btnInstall) {
+    btnInstall.disabled = true;
+    btnInstall.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (statusEl) statusEl.textContent = (outcome === "accepted") ? "installed" : "dismissed";
+      deferredPrompt = null;
+      btnInstall.disabled = true;
+    });
+  }
+
+  // Standalone detection (iOS and others)
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+  if (standalone && statusEl) statusEl.textContent = "installed";
+})();
+</script>
+
+</body></html> as before.)
         */
 
         (function () {
@@ -2951,6 +3128,49 @@
         //<!-- END: Combo Meds + Split Pill Auto-Inject -->
 
     </script>
+
+<script>
+// === PWA bootstrap ===
+(function () {
+  const statusEl = document.querySelector("#pwa-status");
+  const btnInstall = document.querySelector("#btn-install");
+
+  // Service Worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js")
+      .then(() => { if (statusEl) statusEl.textContent = "ready"; })
+      .catch(() => { if (statusEl) statusEl.textContent = "error"; });
+  } else {
+    if (statusEl) statusEl.textContent = "unsupported";
+  }
+
+  // Install prompt (Android/desktop)
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (statusEl) statusEl.textContent = "installable";
+    if (btnInstall) btnInstall.disabled = false;
+  });
+
+  if (btnInstall) {
+    btnInstall.disabled = true;
+    btnInstall.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (statusEl) statusEl.textContent = (outcome === "accepted") ? "installed" : "dismissed";
+      deferredPrompt = null;
+      btnInstall.disabled = true;
+    });
+  }
+
+  // Standalone detection (iOS and others)
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+  if (standalone && statusEl) statusEl.textContent = "installed";
+})();
+</script>
+
 </body>
 
 </html>
